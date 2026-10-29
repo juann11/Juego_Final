@@ -2,7 +2,7 @@ import Phaser from 'phaser'
 import { cargar, guardar } from '../almacen'
 import {
   ENEMIGOS,
-  JEFE,
+  DIFICULTADES,
   NIVELES,
   VIDAS_MAX,
   aplicarPowerUp,
@@ -12,6 +12,8 @@ import {
   elegirEnemigo,
   multiplicador,
   nuevaPartida,
+  vidaJefe,
+  type Dificultad,
   recibirGolpe,
   type Partida,
   type TipoEnemigo,
@@ -26,7 +28,6 @@ type Grupo = Phaser.Physics.Arcade.Group
 
 const CADENCIA_MS = 170
 const VEL_BALA = 650
-const PROB_POWERUP = 0.1
 const POWERUPS: TipoPowerUp[] = ['triple', 'triple', 'escudo', 'vida']
 const TEXTURA_POWERUP: Record<TipoPowerUp, string> = { triple: 'pu-triple', escudo: 'pu-escudo', vida: 'corazon' }
 const NOMBRE_POWERUP: Record<TipoPowerUp, string> = { triple: '¡DISPARO TRIPLE!', escudo: '¡ESCUDO!', vida: '¡VIDA EXTRA!' }
@@ -41,6 +42,7 @@ export class Juego extends Phaser.Scene {
   private powerups!: Grupo
   private jefe?: Sprite
   private jefeActivo = false
+  private vidaJefeMax = 0
   private barraJefe?: Phaser.GameObjects.Rectangle
   private generador?: Phaser.Time.TimerEvent
   private teclas?: Phaser.Types.Input.Keyboard.CursorKeys
@@ -55,9 +57,17 @@ export class Juego extends Phaser.Scene {
     super('Juego')
   }
 
+  private get dif() {
+    return DIFICULTADES[this.partida.dificultad]
+  }
+
   create() {
     this.cameras.main.fadeIn(220, 15, 23, 42)
-    this.partida = nuevaPartida()
+    // localStorage se puede editar a mano: si el valor no es válido, normal
+    const guardada = cargar<Dificultad>('dificultad', 'normal')
+    const dificultad = guardada in DIFICULTADES ? guardada : 'normal'
+    this.partida = nuevaPartida(dificultad)
+    this.vidaJefeMax = vidaJefe(dificultad)
     this.invulnerable = false
     this.jefe = undefined
     this.jefeActivo = false
@@ -192,7 +202,7 @@ export class Juego extends Phaser.Scene {
   private configurarNivel() {
     const nivel = NIVELES[this.partida.nivel - 1]
     this.generador?.remove()
-    this.generador = this.time.addEvent({ delay: nivel.intervaloMs, loop: true, callback: () => this.lanzarEnemigo() })
+    this.generador = this.time.addEvent({ delay: nivel.intervaloMs * this.dif.intervalo, loop: true, callback: () => this.lanzarEnemigo() })
     this.banner(`NIVEL ${this.partida.nivel}`)
   }
 
@@ -202,7 +212,7 @@ export class Juego extends Phaser.Scene {
     const x = tipo === 'zigzag' ? Phaser.Math.Between(110, ANCHO - 110) : Phaser.Math.Between(30, ANCHO - 30)
     const e = this.enemigos.create(x, -40, tipo) as Sprite
     e.setData({ tipo, vida: ENEMIGOS[tipo].vida, baseX: x, t0: this.time.now })
-    const v = nivel.velocidad * Phaser.Math.FloatBetween(0.85, 1.15)
+    const v = nivel.velocidad * this.dif.velocidad * Phaser.Math.FloatBetween(0.85, 1.15)
 
     if (tipo === 'meteorito') {
       e.setScale(Phaser.Math.FloatBetween(1, 1.6))
@@ -228,7 +238,7 @@ export class Juego extends Phaser.Scene {
         this.dispararA(e.x, e.y + 24, 280)
         e.setData('proxDisparo', ahora + 1500)
       }
-      if (salida && ahora > salida) e.setVelocityY(NIVELES[this.partida.nivel - 1].velocidad)
+      if (salida && ahora > salida) e.setVelocityY(NIVELES[this.partida.nivel - 1].velocidad * this.dif.velocidad)
     }
   }
 
@@ -250,7 +260,7 @@ export class Juego extends Phaser.Scene {
     this.explosion(enemigo.x, enemigo.y, tipo === 'meteorito' ? 14 : 10)
     this.textoFlotante(enemigo.x, enemigo.y, `+${this.partida.puntos - puntosAntes}`, mult > 1 ? '#facc15' : COLOR.texto)
     if (mult > multAntes) this.textoFlotante(ANCHO / 2, ALTO / 2, `¡COMBO x${mult}!`, COLOR.textoVerde, 40)
-    if (Math.random() < PROB_POWERUP) this.soltarPowerUp(enemigo.x, enemigo.y)
+    if (Math.random() < this.dif.probPowerUp) this.soltarPowerUp(enemigo.x, enemigo.y)
     enemigo.destroy()
   }
 
@@ -275,7 +285,7 @@ export class Juego extends Phaser.Scene {
     this.banner('¡ALERTA!\nJEFE FINAL', COLOR.textoRojo)
     const jefe = this.physics.add.sprite(ANCHO / 2, -120, 'jefe').setScale(2).setDepth(1)
     jefe.body.setSize(jefe.width * 0.9, jefe.height * 0.7)
-    jefe.setData({ vida: JEFE.vida, proxAbanico: 0, proxApuntado: 0 })
+    jefe.setData({ vida: this.vidaJefeMax, proxAbanico: 0, proxApuntado: 0 })
     this.jefe = jefe
     this.physics.add.overlap(jefe, this.balas, (_j, b) => this.impactarJefe(b as Sprite))
     this.physics.add.overlap(this.nave, jefe, () => this.chocar(jefe, false))
@@ -297,7 +307,7 @@ export class Juego extends Phaser.Scene {
   private moverJefe() {
     const jefe = this.jefe!
     const ahora = this.time.now
-    const furia = jefe.getData('vida') <= JEFE.vida / 2
+    const furia = jefe.getData('vida') <= this.vidaJefeMax / 2
     jefe.x = ANCHO / 2 + Math.sin(ahora / (furia ? 600 : 900)) * 140
     if (ahora > jefe.getData('proxAbanico')) {
       // abanico de balas hacia abajo
@@ -307,11 +317,11 @@ export class Juego extends Phaser.Scene {
         const b = this.balasEnemigas.create(jefe.x, jefe.y + 40, 'balaEnemiga') as Sprite
         b.setVelocity(Math.cos(ang) * 220, Math.sin(ang) * 220)
       }
-      jefe.setData('proxAbanico', ahora + (furia ? 1300 : 1900))
+      jefe.setData('proxAbanico', ahora + (furia ? 1300 : 1900) * this.dif.intervalo)
     }
     if (ahora > jefe.getData('proxApuntado')) {
       for (let i = 0; i < 3; i++) this.time.delayedCall(i * 150, () => this.jefeActivo && this.dispararA(jefe.x, jefe.y + 40, 320))
-      jefe.setData('proxApuntado', ahora + (furia ? 1800 : 2800))
+      jefe.setData('proxApuntado', ahora + (furia ? 1800 : 2800) * this.dif.intervalo)
     }
   }
 
@@ -324,8 +334,8 @@ export class Juego extends Phaser.Scene {
     jefe.setData('vida', vida)
     this.destello(jefe)
     sonar('impacto')
-    this.barraJefe!.width = 400 * Math.max(0, vida / JEFE.vida)
-    if (vida === Math.floor(JEFE.vida / 2)) {
+    this.barraJefe!.width = 400 * Math.max(0, vida / this.vidaJefeMax)
+    if (vida === Math.floor(this.vidaJefeMax / 2)) {
       this.textoFlotante(ANCHO / 2, ALTO / 2, '¡MODO FURIA!', COLOR.textoRojo, 40)
       jefe.setTint(0xff8888)
     }
@@ -354,7 +364,7 @@ export class Juego extends Phaser.Scene {
     detenerMusica()
     if (!gano) this.physics.pause()
     this.nave.body!.enable = false
-    const registro: Registro = { nombre: cargar('nombre', 'PILOTO'), puntos, fecha: new Date().toLocaleDateString('sv') } // 'sv' = AAAA-MM-DD en hora local
+    const registro: Registro = { nombre: cargar('nombre', 'PILOTO'), puntos, fecha: new Date().toLocaleDateString('sv'), dificultad: this.partida.dificultad } // 'sv' = AAAA-MM-DD en hora local
     guardar('top', agregarPuntaje(cargar<Registro[]>('top', []), registro))
     this.time.delayedCall(gano ? 1300 : 0, () => {
       sonar(gano ? 'victoria' : 'fin')
@@ -387,7 +397,7 @@ export class Juego extends Phaser.Scene {
     this.time.delayedCall(50, () => {
       if (!objetivo.active) return
       objetivo.clearTint()
-      if (objetivo === this.jefe && objetivo.getData('vida') <= JEFE.vida / 2) objetivo.setTint(0xff8888)
+      if (objetivo === this.jefe && objetivo.getData('vida') <= this.vidaJefeMax / 2) objetivo.setTint(0xff8888)
     })
   }
 
@@ -429,7 +439,7 @@ export class Juego extends Phaser.Scene {
 
   private actualizarHud() {
     const p = this.partida
-    this.corazones.forEach((c, i) => c.setVisible(i < Math.max(p.vidas, 3)).setAlpha(i < p.vidas ? 1 : 0.15))
+    this.corazones.forEach((c, i) => c.setVisible(i < Math.max(p.vidas, this.dif.vidas)).setAlpha(i < p.vidas ? 1 : 0.15))
     this.hudPuntos.setText(`${p.puntos}`)
     const mult = multiplicador(p)
     this.hudCombo.setText(mult > 1 ? `x${mult}` : '')

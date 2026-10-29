@@ -1,11 +1,23 @@
 # Escuadrón Estelar
 
-Shooter espacial para Android: pilotas un caza que dispara solo, derribas escuadrones enemigos durante 3 niveles y al final enfrentas al jefe. Tienes 3 vidas (hasta 5 con power-ups).
+Shooter espacial para Android: pilotas un caza que dispara solo, derribas escuadrones enemigos durante 3 niveles y al final enfrentas al jefe. Tienes 3 vidas (hasta 5 con power-ups; depende de la dificultad).
 
 - **Enemigos:** dron (baja recto), zigzag (ondea), tirador (se detiene y te apunta) y meteorito (resistente). Cada nivel trae enemigos nuevos y más velocidad.
 - **Jefe final:** barra de vida, ráfagas en abanico, disparos apuntados y modo furia a mitad de vida.
 - **Power-ups:** disparo triple (10 s), escudo (absorbe un golpe) y vida extra.
 - **Combos:** derribos seguidos suben el multiplicador hasta x5; un golpe o 2.5 s sin derribar lo reinician.
+- **Dificultad** (se elige en el menú y se guarda):
+
+  | | Fácil | Normal | Difícil |
+  |---|---|---|---|
+  | Velocidad enemigos | ×0.8 | ×1 | ×1.25 |
+  | Tiempo entre enemigos | ×1.3 | ×1 | ×0.75 |
+  | Vida del jefe | 84 | 140 | 210 |
+  | Vidas iniciales | 5 | 3 | 2 |
+  | Prob. power-up | 15% | 10% | 7% |
+  | Puntos | ×0.5 | ×1 | ×1.5 |
+
+  Se ajusta en `DIFICULTADES` de `src/logica/partida.ts`.
 - **Pausa** con botón o al salir de la app; música chiptune y vibración al recibir golpes.
 
 Entrega #4 - Final (Juego) · Aplicaciones Móviles · UPB.

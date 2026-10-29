@@ -1,10 +1,13 @@
 import Phaser from 'phaser'
 import { cargar, guardar } from '../almacen'
+import { DIFICULTADES, type Dificultad } from '../logica/partida'
 import type { Registro } from '../logica/puntaje'
 import { alternarSonido, sonar, sonidoActivo } from '../sonido'
 import { ANCHO, COLOR, boton, fondoEstrellas, irA, texto, titulo } from '../ui'
 
 const TOQUES_SECRETO = 5
+const ORDEN_DIFICULTAD: Dificultad[] = ['facil', 'normal', 'dificil']
+const COLOR_DIFICULTAD: Record<Dificultad, string> = { facil: COLOR.textoVerde, normal: '#facc15', dificil: COLOR.textoRojo }
 
 export class Home extends Phaser.Scene {
   constructor() {
@@ -51,9 +54,26 @@ export class Home extends Phaser.Scene {
       pintarPiloto()
     })
 
-    boton(this, 550, 'JUGAR', () => irA(this, 'Juego'))
-    boton(this, 630, 'PUNTAJES', () => irA(this, 'Puntajes'), COLOR.azul)
-    boton(this, 710, 'CRÉDITOS', () => irA(this, 'Creditos'), COLOR.azul)
+    // Selector de dificultad: cada toque pasa a la siguiente y se guarda
+    const dificultad = texto(this, ANCHO / 2, 505, '', 30)
+    const pintarDificultad = () => {
+      const d = cargar<Dificultad>('dificultad', 'normal')
+      const actual = d in DIFICULTADES ? d : 'normal'
+      dificultad.setText(`Dificultad: ‹ ${DIFICULTADES[actual].nombre} ›`).setColor(COLOR_DIFICULTAD[actual])
+      return actual
+    }
+    pintarDificultad()
+    dificultad.setPadding(12).setInteractive({ useHandCursor: true }).on('pointerup', () => {
+      const actual = pintarDificultad()
+      guardar('dificultad', ORDEN_DIFICULTAD[(ORDEN_DIFICULTAD.indexOf(actual) + 1) % ORDEN_DIFICULTAD.length])
+      pintarDificultad()
+      sonar('clic')
+      this.tweens.add({ targets: dificultad, scale: { from: 1.15, to: 1 }, duration: 150 })
+    })
+
+    boton(this, 572, 'JUGAR', () => irA(this, 'Juego'))
+    boton(this, 647, 'PUNTAJES', () => irA(this, 'Puntajes'), COLOR.azul)
+    boton(this, 722, 'CRÉDITOS', () => irA(this, 'Creditos'), COLOR.azul)
 
     const sonido = texto(this, ANCHO - 16, 24, '', 26, COLOR.textoSuave).setOrigin(1, 0)
     const pintarSonido = () => sonido.setText(`Sonido: ${sonidoActivo() ? 'SÍ' : 'NO'}`)

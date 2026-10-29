@@ -1,5 +1,6 @@
 import Phaser from 'phaser'
 import { cargar } from '../almacen'
+import { DIFICULTADES } from '../logica/partida'
 import type { Registro } from '../logica/puntaje'
 import { ANCHO, COLOR, boton, fondoEstrellas, irA, texto, titulo } from '../ui'
 
@@ -40,7 +41,8 @@ export class Puntajes extends Phaser.Scene {
     // Resalta la partida recién jugada (la primera que coincide)
     const nueva = r ? top.findIndex((t) => t.puntos === r.puntos && t.nombre === r.nombre && t.fecha === r.fecha) : -1
     top.forEach((t, i) => {
-      const fila = texto(this, ANCHO / 2, y + 56 + i * 42, `${i + 1}. ${t.nombre.padEnd(10, ' ')} ${String(t.puntos).padStart(6, ' ')}`, 32,
+      const dif = t.dificultad ? DIFICULTADES[t.dificultad]?.nombre.slice(0, 3) ?? '' : ''
+      const fila = texto(this, ANCHO / 2, y + 56 + i * 42, `${i + 1}. ${t.nombre.padEnd(10, ' ')} ${String(t.puntos).padStart(6, ' ')} ${dif.padEnd(3, ' ')}`, 32,
         i === nueva ? '#facc15' : COLOR.texto).setAlpha(0).setX(ANCHO / 2 + 40)
       this.tweens.add({ targets: fila, alpha: 1, x: ANCHO / 2, delay: 150 * i, duration: 300, ease: 'Sine.easeOut' })
     })

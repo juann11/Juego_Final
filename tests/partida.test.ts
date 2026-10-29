@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   COMBO_VENTANA_S,
+  DIFICULTADES,
+  vidaJefe,
   ENEMIGOS,
   JEFE,
   NIVELES,
@@ -138,5 +140,39 @@ describe('elegirEnemigo', () => {
       const antes = Object.keys(NIVELES[i - 1].enemigos)
       expect(Object.keys(NIVELES[i].enemigos).some((t) => !antes.includes(t))).toBe(true)
     }
+  })
+})
+
+describe('dificultad', () => {
+  it('por defecto la partida es normal', () => {
+    expect(nuevaPartida().dificultad).toBe('normal')
+  })
+
+  it('las vidas iniciales dependen de la dificultad', () => {
+    expect(nuevaPartida('facil').vidas).toBe(DIFICULTADES.facil.vidas)
+    expect(nuevaPartida('dificil').vidas).toBe(DIFICULTADES.dificil.vidas)
+    expect(DIFICULTADES.facil.vidas).toBeGreaterThan(DIFICULTADES.dificil.vidas)
+  })
+
+  it('difícil da más puntos por derribo que fácil', () => {
+    const facil = destruir(nuevaPartida('facil'), 'tirador').puntos
+    const normal = destruir(nuevaPartida('normal'), 'tirador').puntos
+    const dificil = destruir(nuevaPartida('dificil'), 'tirador').puntos
+    expect(normal).toBe(ENEMIGOS.tirador.puntos)
+    expect(facil).toBeLessThan(normal)
+    expect(dificil).toBeGreaterThan(normal)
+    expect(Number.isInteger(facil) && Number.isInteger(dificil)).toBe(true)
+  })
+
+  it('el jefe tiene más vida en difícil y menos en fácil', () => {
+    expect(vidaJefe('normal')).toBe(JEFE.vida)
+    expect(vidaJefe('facil')).toBeLessThan(JEFE.vida)
+    expect(vidaJefe('dificil')).toBeGreaterThan(JEFE.vida)
+  })
+
+  it('en difícil los enemigos son más rápidos y salen más seguido', () => {
+    expect(DIFICULTADES.dificil.velocidad).toBeGreaterThan(DIFICULTADES.normal.velocidad)
+    expect(DIFICULTADES.dificil.intervalo).toBeLessThan(DIFICULTADES.normal.intervalo)
+    expect(DIFICULTADES.facil.velocidad).toBeLessThan(DIFICULTADES.normal.velocidad)
   })
 })
