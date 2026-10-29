@@ -3,7 +3,7 @@ import { cargar, guardar } from './almacen'
 
 type Efecto =
   | 'clic' | 'golpe' | 'nivel' | 'fin' | 'victoria' | 'secreto'
-  | 'disparo' | 'explosion' | 'powerup' | 'alerta' | 'escudo' | 'impacto'
+  | 'disparo' | 'explosion' | 'powerup' | 'alerta' | 'escudo' | 'impacto' | 'moneda' | 'error' | 'picada'
 
 interface Sonido {
   notas: [number, number][] // [frecuencia Hz, duración s] en secuencia
@@ -24,6 +24,9 @@ const EFECTOS: Record<Efecto, Sonido> = {
   powerup: { notas: [[523, 0.06], [659, 0.06], [784, 0.06], [1047, 0.12]], onda: 'square', vol: 0.09 },
   alerta: { notas: [[880, 0.15], [660, 0.15], [880, 0.15], [660, 0.15], [880, 0.15], [660, 0.3]], onda: 'square', vol: 0.08 },
   escudo: { notas: [[300, 0.08], [600, 0.15]], onda: 'triangle', vol: 0.15 },
+  moneda: { notas: [[1320, 0.04], [1760, 0.07]], onda: 'square', vol: 0.04 },
+  error: { notas: [[140, 0.18]], onda: 'square', vol: 0.08 },
+  picada: { notas: [[900, 0.06], [700, 0.06], [500, 0.08]], onda: 'sawtooth', vol: 0.04 },
 }
 
 let contexto: AudioContext | null = null
