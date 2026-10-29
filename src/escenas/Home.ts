@@ -1,9 +1,10 @@
 import Phaser from 'phaser'
 import { cargar, guardar } from '../almacen'
+import { MAX_NOMBRE, limpiarNombre } from '../logica/nombre'
 import { DIFICULTADES, type Dificultad } from '../logica/partida'
 import type { Registro } from '../logica/puntaje'
 import { alternarSonido, sonar, sonidoActivo } from '../sonido'
-import { ANCHO, COLOR, boton, fondoEstrellas, irA, texto, titulo } from '../ui'
+import { ANCHO, COLOR, boton, fondoEstrellas, irA, pedirTexto, texto, titulo } from '../ui'
 
 const TOQUES_SECRETO = 5
 const ORDEN_DIFICULTAD: Dificultad[] = ['facil', 'normal', 'dificil']
@@ -45,13 +46,14 @@ export class Home extends Phaser.Scene {
     texto(this, ANCHO / 2, 420, `Mejor puntaje: ${top[0]?.puntos ?? 0}`, 30, COLOR.textoSuave)
 
     const piloto = texto(this, ANCHO / 2, 460, '', 30)
-    const pintarPiloto = () => piloto.setText(`Piloto: ${cargar('nombre', 'PILOTO')}  ✎`)
+    const pintarPiloto = () => piloto.setText(`Piloto: ${cargar('nombre', 'PILOTO')}  ✎ cambiar`)
     pintarPiloto()
-    piloto.setPadding(12).setInteractive({ useHandCursor: true }).on('pointerup', () => {
-      const nombre = window.prompt('¿Cómo te llamas, piloto?', cargar('nombre', 'PILOTO'))
-      const limpio = nombre?.trim().toUpperCase().slice(0, 10)
+    piloto.setPadding(12).setInteractive({ useHandCursor: true }).on('pointerup', async () => {
+      sonar('clic')
+      const nombre = await pedirTexto('¿Cómo te llamas, piloto?', cargar('nombre', 'PILOTO'), MAX_NOMBRE)
+      const limpio = nombre === null ? null : limpiarNombre(nombre)
       if (limpio) guardar('nombre', limpio)
-      pintarPiloto()
+      if (piloto.active) pintarPiloto() // por si la escena cambió mientras el editor estaba abierto
     })
 
     // Selector de dificultad: cada toque pasa a la siguiente y se guarda
