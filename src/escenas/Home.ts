@@ -4,7 +4,8 @@ import { MAX_NOMBRE, limpiarNombre } from '../logica/nombre'
 import { DIFICULTADES, type Dificultad } from '../logica/partida'
 import type { Registro } from '../logica/puntaje'
 import { alternarSonido, sonar, sonidoActivo } from '../sonido'
-import { ANCHO, COLOR, boton, fondoEstrellas, irA, pedirTexto, texto, titulo } from '../ui'
+import { pedirTexto } from '../editorTexto'
+import { ANCHO, COLOR, boton, fondoEstrellas, irA, texto, titulo } from '../ui'
 
 const TOQUES_SECRETO = 5
 const ORDEN_DIFICULTAD: Dificultad[] = ['facil', 'normal', 'dificil']
