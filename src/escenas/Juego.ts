@@ -5,13 +5,19 @@ import {
   DIFICULTADES,
   NIVELES,
   VIDAS_MAX,
+  alas,
   aplicarPowerUp,
   avanzarTiempo,
+  cadenciaMs,
+  danioBala,
   derrotarJefe,
   destruir,
   elegirEnemigo,
   multiplicador,
   nuevaPartida,
+  radioIman,
+  recogerMonedas,
+  salirDeTienda,
   vidaJefe,
   type Dificultad,
   recibirGolpe,
@@ -26,20 +32,24 @@ import { ALTO, ANCHO, COLOR, fondoEstrellas, irA, texto, titulo } from '../ui'
 type Sprite = Phaser.Physics.Arcade.Sprite
 type Grupo = Phaser.Physics.Arcade.Group
 
-const CADENCIA_MS = 170
 const VEL_BALA = 650
 const POWERUPS: TipoPowerUp[] = ['triple', 'triple', 'escudo', 'vida']
 const TEXTURA_POWERUP: Record<TipoPowerUp, string> = { triple: 'pu-triple', escudo: 'pu-escudo', vida: 'corazon' }
 const NOMBRE_POWERUP: Record<TipoPowerUp, string> = { triple: '¡DISPARO TRIPLE!', escudo: '¡ESCUDO!', vida: '¡VIDA EXTRA!' }
 
 export class Juego extends Phaser.Scene {
-  private partida!: Partida
+  partida!: Partida // pública: el Hangar compra sobre ella
   private nave!: Sprite
   private escudoVisual!: Phaser.GameObjects.Arc
   private balas!: Grupo
   private enemigos!: Grupo
   private balasEnemigas!: Grupo
   private powerups!: Grupo
+  private monedas!: Grupo
+  private disparo?: Phaser.Time.TimerEvent
+  private tick = 0
+  private alasNaves: Phaser.GameObjects.Image[] = []
+  private hudMonedas!: Phaser.GameObjects.Text
   private jefe?: Sprite
   private jefeActivo = false
   private vidaJefeMax = 0
@@ -71,6 +81,7 @@ export class Juego extends Phaser.Scene {
     this.invulnerable = false
     this.jefe = undefined
     this.jefeActivo = false
+    this.alasNaves = []
     fondoEstrellas(this, 2)
     fondoEstrellas(this, 5).setAlpha(0.5)
 
@@ -85,7 +96,9 @@ export class Juego extends Phaser.Scene {
     this.enemigos = this.physics.add.group()
     this.balasEnemigas = this.physics.add.group()
     this.powerups = this.physics.add.group()
+    this.monedas = this.physics.add.group()
     this.physics.add.overlap(this.balas, this.enemigos, (b, e) => this.impactar(b as Sprite, e as Sprite))
+    this.physics.add.overlap(this.nave, this.monedas, (_n, m) => this.recogerMoneda(m as Sprite))
     this.physics.add.overlap(this.nave, this.enemigos, (_n, e) => this.chocar(e as Sprite))
     this.physics.add.overlap(this.nave, this.balasEnemigas, (_n, b) => this.chocar(b as Sprite))
     this.physics.add.overlap(this.nave, this.powerups, (_n, p) => this.recoger(p as Sprite))
@@ -96,7 +109,7 @@ export class Juego extends Phaser.Scene {
       this.moverNave((p.x - p.prevPosition.x) * 1.3, (p.y - p.prevPosition.y) * 1.3)
     })
     this.teclas = this.input.keyboard?.createCursorKeys()
-    this.time.addEvent({ delay: CADENCIA_MS, loop: true, callback: () => this.disparar() })
+    this.aplicarMejoras()
 
     this.crearHud()
     this.mostrarTutorial()
@@ -119,11 +132,7 @@ export class Juego extends Phaser.Scene {
     if (this.partida.terminada) return
     const antes = this.partida
     this.partida = avanzarTiempo(this.partida, delta / 1000)
-    if (this.partida.nivel !== antes.nivel) {
-      sonar('nivel')
-      this.configurarNivel()
-    }
-    if (this.partida.jefe && !antes.jefe) this.aparecerJefe()
+    if (this.partida.tienda && !antes.tienda) this.completarNivel()
 
     const vel = 0.5 * delta
     if (this.teclas?.left.isDown) this.moverNave(-vel, 0)
@@ -131,6 +140,12 @@ export class Juego extends Phaser.Scene {
     if (this.teclas?.up.isDown) this.moverNave(0, -vel)
     if (this.teclas?.down.isDown) this.moverNave(0, vel)
     this.escudoVisual.setPosition(this.nave.x, this.nave.y).setVisible(this.partida.escudo)
+    // las alas siguen a la nave con un poco de retraso
+    this.alasNaves.forEach((a, i) => {
+      a.x = Phaser.Math.Linear(a.x, this.nave.x + (i % 2 ? 55 : -55), 0.2)
+      a.y = Phaser.Math.Linear(a.y, this.nave.y + 25, 0.2)
+    })
+    this.atraerMonedas()
 
     this.moverEnemigos()
     if (this.jefeActivo) this.moverJefe()
@@ -149,12 +164,88 @@ export class Juego extends Phaser.Scene {
   private disparar() {
     if (this.partida.terminada) return
     const angulos = this.partida.tripleS > 0 ? [-12, 0, 12] : [0]
-    for (const a of angulos) {
-      const b = this.balas.create(this.nave.x, this.nave.y - 34, 'bala') as Sprite
-      const rad = Phaser.Math.DegToRad(a)
-      b.setVelocity(Math.sin(rad) * VEL_BALA, -Math.cos(rad) * VEL_BALA).setAngle(a)
-    }
+    for (const a of angulos) this.crearBala(this.nave.x, this.nave.y - 34, a)
+    // las alas disparan un tiro de cada dos
+    if (this.tick++ % 2 === 0) for (const a of this.alasNaves) this.crearBala(a.x, a.y - 20, 0)
     sonar('disparo')
+  }
+
+  private crearBala(x: number, y: number, angulo: number) {
+    const b = this.balas.create(x, y, 'bala') as Sprite
+    const rad = Phaser.Math.DegToRad(angulo)
+    b.setVelocity(Math.sin(rad) * VEL_BALA, -Math.cos(rad) * VEL_BALA).setAngle(angulo)
+  }
+
+  // Cadencia y alas dependen de las mejoras compradas en el Hangar.
+  private aplicarMejoras() {
+    this.disparo?.remove()
+    this.disparo = this.time.addEvent({ delay: cadenciaMs(this.partida), loop: true, callback: () => this.disparar() })
+    while (this.alasNaves.length < alas(this.partida)) {
+      const a = this.add.image(this.nave.x, this.nave.y + 40, 'ala').setScale(1.3).setDepth(2)
+      this.tweens.add({ targets: a, scale: { from: 0, to: 1.3 }, duration: 400, ease: 'Back.easeOut' })
+      this.alasNaves.push(a)
+    }
+  }
+
+  // ---------- monedas y hangar ----------
+
+  private soltarMonedas(x: number, y: number, cantidad: number) {
+    for (let i = 0; i < cantidad; i++) {
+      const m = this.monedas.create(x + Phaser.Math.Between(-12, 12), y, 'moneda') as Sprite
+      m.setScale(1.4).setVelocity(Phaser.Math.Between(-70, 70), Phaser.Math.Between(-150, -60)).setAccelerationY(320)
+      ;(m.body as Phaser.Physics.Arcade.Body).setMaxVelocityY(220)
+      this.tweens.add({ targets: m, scaleX: 0.3, duration: 220, yoyo: true, repeat: -1 })
+    }
+  }
+
+  private atraerMonedas() {
+    const radio = radioIman(this.partida)
+    for (const m of this.monedas.getChildren() as Sprite[]) {
+      if (Phaser.Math.Distance.Between(m.x, m.y, this.nave.x, this.nave.y) > radio) continue
+      m.setAcceleration(0)
+      this.physics.moveToObject(m, this.nave, 520)
+    }
+  }
+
+  private recogerMoneda(m: Sprite) {
+    if (!m.active) return
+    m.destroy()
+    this.partida = recogerMonedas(this.partida, 1)
+    sonar('moneda')
+    this.tweens.add({ targets: this.hudMonedas, scale: { from: 1.4, to: 1 }, duration: 150 })
+  }
+
+  private completarNivel() {
+    this.generador?.remove()
+    this.invulnerable = true
+    sonar('victoria')
+    // limpia la pantalla: enemigos explotan y las monedas sueltas se cobran solas
+    for (const e of [...this.enemigos.getChildren()] as Sprite[]) {
+      this.explosion(e.x, e.y, 8)
+      e.destroy()
+    }
+    this.balasEnemigas.clear(true, true)
+    const sueltas = this.monedas.getLength()
+    this.monedas.clear(true, true)
+    const bono = 10 * this.partida.nivel
+    this.partida = recogerMonedas(this.partida, sueltas + bono)
+    this.banner('¡NIVEL\nCOMPLETADO!', COLOR.textoVerde)
+    this.textoFlotante(ANCHO / 2, ALTO / 2 + 40, `Bono +${bono} monedas`, '#facc15', 32)
+    this.time.delayedCall(2000, () => {
+      detenerMusica()
+      this.scene.launch('Hangar')
+      this.scene.pause()
+    })
+  }
+
+  // La llama el Hangar al pulsar CONTINUAR, justo antes de reanudar esta escena.
+  continuarTrasHangar() {
+    this.partida = salirDeTienda(this.partida)
+    this.aplicarMejoras()
+    this.invulnerable = false
+    if (this.partida.jefe) return this.aparecerJefe()
+    sonar('nivel')
+    this.configurarNivel()
   }
 
   private chocar(objeto: Sprite, destruirObjeto = true) {
@@ -218,9 +309,12 @@ export class Juego extends Phaser.Scene {
       e.setScale(Phaser.Math.FloatBetween(1, 1.6))
       e.setVelocity(Phaser.Math.Between(-40, 40), v * 0.8).setAngularVelocity(Phaser.Math.Between(-150, 150))
     } else {
-      e.setScale(1.3).setVelocityY(tipo === 'zigzag' ? v * 0.7 : v)
+      e.setScale(1.3).setVelocityY(tipo === 'zigzag' ? v * 0.7 : tipo === 'kamikaze' ? v * 0.8 : v)
     }
-    if (tipo === 'tirador') e.setData({ alto: Phaser.Math.Between(110, 260), proxDisparo: 0, salida: 0 })
+    const disparoMs = ENEMIGOS[tipo].disparoMs
+    if (disparoMs) e.setData('proxDisparo', this.time.now + Phaser.Math.Between(400, disparoMs))
+    if (tipo === 'tirador') e.setData({ alto: Phaser.Math.Between(110, 260), salida: 0 })
+    if (tipo === 'kamikaze') e.setData({ alto: Phaser.Math.Between(120, 280), fase: 'baja' })
   }
 
   private moverEnemigos() {
@@ -228,17 +322,40 @@ export class Juego extends Phaser.Scene {
     for (const e of this.enemigos.getChildren() as Sprite[]) {
       const tipo = e.getData('tipo') as TipoEnemigo
       if (tipo === 'zigzag') e.x = e.getData('baseX') + Math.sin((ahora - e.getData('t0')) / 280) * 80
-      if (tipo !== 'tirador') continue
-      // El tirador baja, se queda quieto disparando unos segundos y luego se va.
-      if (!e.getData('salida') && e.y >= e.getData('alto')) {
-        e.setVelocityY(0).setData({ salida: ahora + 6000, proxDisparo: ahora + 500 })
-      }
-      const salida = e.getData('salida')
-      if (salida && ahora < salida && ahora > e.getData('proxDisparo')) {
-        this.dispararA(e.x, e.y + 24, 280)
-        e.setData('proxDisparo', ahora + 1500)
-      }
-      if (salida && ahora > salida) e.setVelocityY(NIVELES[this.partida.nivel - 1].velocidad * this.dif.velocidad)
+      if (tipo === 'kamikaze') this.moverKamikaze(e, ahora)
+      if (tipo === 'tirador') this.moverTirador(e, ahora)
+
+      // dron dispara recto; zigzag y tirador apuntan a la nave (solo si están en pantalla)
+      const disparoMs = ENEMIGOS[tipo].disparoMs
+      const puede = tipo !== 'tirador' || (e.getData('salida') && ahora < e.getData('salida'))
+      if (!disparoMs || !puede || e.y < 30 || e.y > ALTO * 0.6 || ahora < e.getData('proxDisparo')) continue
+      if (tipo === 'dron') (this.balasEnemigas.create(e.x, e.y + 20, 'balaEnemiga') as Sprite).setVelocityY(260)
+      else this.dispararA(e.x, e.y + 24, 280)
+      e.setData('proxDisparo', ahora + disparoMs * this.dif.intervalo)
+    }
+  }
+
+  // El tirador baja, se queda quieto disparando unos segundos y luego se va.
+  private moverTirador(e: Sprite, ahora: number) {
+    if (!e.getData('salida') && e.y >= e.getData('alto')) {
+      e.setVelocityY(0).setData({ salida: ahora + 6000, proxDisparo: ahora + 500 })
+    }
+    const salida = e.getData('salida')
+    if (salida && ahora > salida) e.setVelocityY(NIVELES[this.partida.nivel - 1].velocidad * this.dif.velocidad)
+  }
+
+  // El kamikaze baja, se detiene parpadeando en rojo (aviso) y se lanza en picada hacia la nave.
+  private moverKamikaze(e: Sprite, ahora: number) {
+    const fase = e.getData('fase')
+    if (fase === 'baja' && e.y >= e.getData('alto')) {
+      e.setVelocity(0).setData({ fase: 'carga', picada: ahora + 700 })
+      this.tweens.add({ targets: e, alpha: 0.3, duration: 90, yoyo: true, repeat: 3, onStart: () => e.setTint(0xff4444) })
+    }
+    if (fase === 'carga' && ahora > e.getData('picada')) {
+      e.setData('fase', 'picada').setAlpha(1)
+      this.physics.moveToObject(e, this.nave, 480 * this.dif.velocidad)
+      e.setRotation(Phaser.Math.Angle.Between(e.x, e.y, this.nave.x, this.nave.y) - Math.PI / 2)
+      sonar('picada')
     }
   }
 
@@ -246,7 +363,7 @@ export class Juego extends Phaser.Scene {
     // una bala puede tocar a dos enemigos en el mismo frame: solo cuenta la primera
     if (!bala.active || !enemigo.active) return
     bala.destroy()
-    const vida = enemigo.getData('vida') - 1
+    const vida = enemigo.getData('vida') - danioBala(this.partida)
     enemigo.setData('vida', vida)
     this.destello(enemigo)
     if (vida > 0) return sonar('impacto')
@@ -261,6 +378,7 @@ export class Juego extends Phaser.Scene {
     this.textoFlotante(enemigo.x, enemigo.y, `+${this.partida.puntos - puntosAntes}`, mult > 1 ? '#facc15' : COLOR.texto)
     if (mult > multAntes) this.textoFlotante(ANCHO / 2, ALTO / 2, `¡COMBO x${mult}!`, COLOR.textoVerde, 40)
     if (Math.random() < this.dif.probPowerUp) this.soltarPowerUp(enemigo.x, enemigo.y)
+    this.soltarMonedas(enemigo.x, enemigo.y, ENEMIGOS[tipo].monedas)
     enemigo.destroy()
   }
 
@@ -330,12 +448,14 @@ export class Juego extends Phaser.Scene {
     bala.destroy()
     const jefe = this.jefe!
     if (!this.jefeActivo) return
-    const vida = jefe.getData('vida') - 1
+    const vidaAntes = jefe.getData('vida')
+    const vida = vidaAntes - danioBala(this.partida)
     jefe.setData('vida', vida)
     this.destello(jefe)
     sonar('impacto')
     this.barraJefe!.width = 400 * Math.max(0, vida / this.vidaJefeMax)
-    if (vida === Math.floor(this.vidaJefeMax / 2)) {
+    const mitad = this.vidaJefeMax / 2
+    if (vidaAntes > mitad && vida <= mitad && vida > 0) {
       this.textoFlotante(ANCHO / 2, ALTO / 2, '¡MODO FURIA!', COLOR.textoRojo, 40)
       jefe.setTint(0xff8888)
     }
@@ -384,10 +504,10 @@ export class Juego extends Phaser.Scene {
 
   private limpiarFueraDePantalla() {
     const fuera = (o: Sprite) => o.y > ALTO + 60 || o.y < -60 || o.x < -60 || o.x > ANCHO + 60
-    for (const g of [this.balas, this.enemigos, this.balasEnemigas, this.powerups]) {
+    for (const g of [this.balas, this.enemigos, this.balasEnemigas, this.powerups, this.monedas]) {
       for (const o of [...g.getChildren()] as Sprite[]) {
-        // los enemigos nacen en y=-40: solo se limpian al salir por abajo
-        if (g === this.enemigos ? o.y > ALTO + 60 : fuera(o)) o.destroy()
+        // los enemigos nacen en y=-40: no se limpian por arriba
+        if (g === this.enemigos ? o.y > ALTO + 60 || o.x < -80 || o.x > ANCHO + 80 : fuera(o)) o.destroy()
       }
     }
   }
@@ -424,7 +544,9 @@ export class Juego extends Phaser.Scene {
     this.corazones = Array.from({ length: VIDAS_MAX }, (_, i) => this.add.image(26 + i * 40, 56, 'corazon').setDepth(5))
     this.hudPuntos = titulo(this, 16, 20, '', 14).setOrigin(0, 0.5).setDepth(5)
     this.hudCombo = titulo(this, 240, 20, '', 14, '#facc15').setDepth(5)
-    this.hudTiempo = titulo(this, 270, 56, '', 14).setDepth(5)
+    this.hudTiempo = titulo(this, 232, 56, '', 14).setDepth(5)
+    this.add.image(316, 56, 'moneda').setScale(1.2).setDepth(5)
+    this.hudMonedas = titulo(this, 334, 56, '', 14, '#facc15').setOrigin(0, 0.5).setDepth(5)
     this.hudNivel = titulo(this, ANCHO - 16, 20, '', 12, COLOR.textoVerde).setOrigin(1, 0.5).setDepth(5)
     titulo(this, ANCHO - 30, 56, 'II', 16)
       .setDepth(5)
@@ -444,6 +566,7 @@ export class Juego extends Phaser.Scene {
     const mult = multiplicador(p)
     this.hudCombo.setText(mult > 1 ? `x${mult}` : '')
     this.hudTiempo.setText(p.jefe ? 'JEFE' : `${Math.ceil(p.tiempoRestante)}s`)
+    this.hudMonedas.setText(`${p.monedas}`)
     this.hudNivel.setText(`NIVEL ${p.nivel}/${NIVELES.length}`)
   }
 
