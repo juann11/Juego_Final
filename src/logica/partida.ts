@@ -1,16 +1,29 @@
 // Lógica pura de la partida: sin Phaser, para poder probarla con Vitest.
 
-export type TipoEnemigo = 'dron' | 'zigzag' | 'tirador' | 'meteorito'
+export type TipoEnemigo = 'dron' | 'zigzag' | 'tirador' | 'meteorito' | 'kamikaze'
 export type TipoPowerUp = 'triple' | 'escudo' | 'vida'
+export type TipoMejora = 'potencia' | 'cadencia' | 'alas' | 'iman' | 'vida' | 'escudo'
 
-export const ENEMIGOS: Record<TipoEnemigo, { vida: number; puntos: number }> = {
-  dron: { vida: 1, puntos: 10 },
-  meteorito: { vida: 3, puntos: 15 },
-  zigzag: { vida: 2, puntos: 25 },
-  tirador: { vida: 4, puntos: 40 },
+// disparoMs: cada cuánto dispara (sin él, no dispara)
+export const ENEMIGOS: Record<TipoEnemigo, { vida: number; puntos: number; monedas: number; disparoMs?: number }> = {
+  dron: { vida: 1, puntos: 10, monedas: 1, disparoMs: 2800 },
+  meteorito: { vida: 3, puntos: 15, monedas: 1 },
+  zigzag: { vida: 2, puntos: 25, monedas: 2, disparoMs: 2000 },
+  kamikaze: { vida: 2, puntos: 30, monedas: 2 },
+  tirador: { vida: 4, puntos: 40, monedas: 3, disparoMs: 1500 },
 }
 
-export const JEFE = { vida: 140, puntos: 2000 }
+// Hangar entre niveles: `costos[i]` es el precio del nivel i+1. Reparar y escudo se pueden recomprar.
+export const MEJORAS: Record<TipoMejora, { nombre: string; descripcion: string; costos: number[] }> = {
+  potencia: { nombre: 'POTENCIA', descripcion: '+1 daño por bala', costos: [25, 60, 110] },
+  cadencia: { nombre: 'CADENCIA', descripcion: 'Disparas más rápido', costos: [20, 50, 90] },
+  alas: { nombre: 'ALAS', descripcion: 'Naves de apoyo', costos: [40, 90] },
+  iman: { nombre: 'IMÁN', descripcion: 'Atrae monedas', costos: [15, 35] },
+  vida: { nombre: 'REPARAR', descripcion: '+1 vida', costos: [30] },
+  escudo: { nombre: 'ESCUDO', descripcion: 'Bloquea un golpe', costos: [20] },
+}
+
+export const JEFE = { vida: 220, puntos: 2000 }
 
 export type Dificultad = 'facil' | 'normal' | 'dificil'
 
@@ -37,14 +50,15 @@ export interface Nivel {
 
 export const NIVELES: Nivel[] = [
   { velocidad: 170, intervaloMs: 800, duracionS: 30, enemigos: { dron: 70, meteorito: 30 } },
-  { velocidad: 210, intervaloMs: 650, duracionS: 35, enemigos: { dron: 40, zigzag: 35, meteorito: 25 } },
-  { velocidad: 250, intervaloMs: 520, duracionS: 40, enemigos: { dron: 30, zigzag: 30, tirador: 25, meteorito: 15 } },
+  { velocidad: 210, intervaloMs: 650, duracionS: 35, enemigos: { dron: 35, zigzag: 30, kamikaze: 15, meteorito: 20 } },
+  { velocidad: 250, intervaloMs: 520, duracionS: 40, enemigos: { dron: 25, zigzag: 25, kamikaze: 15, tirador: 25, meteorito: 10 } },
 ]
 
 export const VIDAS_MAX = 5
 export const COMBO_VENTANA_S = 2.5
 export const MULTIPLICADOR_MAX = 5
 export const TRIPLE_S = 10
+export const CADENCIA_BASE_MS = 170
 
 export interface Partida {
   dificultad: Dificultad
@@ -53,6 +67,9 @@ export interface Partida {
   puntos: number
   tiempoRestante: number
   jefe: boolean // true cuando acabó el último nivel y toca pelear contra el jefe
+  tienda: boolean // true entre niveles, mientras el hangar está abierto
+  monedas: number
+  mejoras: Record<TipoMejora, number> // veces compradas
   combo: number // derribos seguidos sin dejar pasar la ventana ni recibir golpes
   comboTiempo: number
   escudo: boolean
@@ -70,6 +87,9 @@ export function nuevaPartida(dificultad: Dificultad = 'normal'): Partida {
     puntos: 0,
     tiempoRestante: NIVELES[0].duracionS,
     jefe: false,
+    tienda: false,
+    monedas: 0,
+    mejoras: { potencia: 0, cadencia: 0, alas: 0, iman: 0, vida: 0, escudo: 0 },
     combo: 0,
     comboTiempo: 0,
     escudo: false,
@@ -127,12 +147,43 @@ export function avanzarTiempo(p: Partida, segundos: number): Partida {
     comboTiempo: Math.max(0, comboTiempo),
     combo: comboTiempo > 0 ? p.combo : 0,
   }
-  if (p.jefe) return base
+  if (p.jefe || p.tienda) return base
   const tiempoRestante = p.tiempoRestante - segundos
   if (tiempoRestante > 0) return { ...base, tiempoRestante }
-  if (p.nivel >= NIVELES.length) return { ...base, tiempoRestante: 0, jefe: true }
-  return { ...base, nivel: p.nivel + 1, tiempoRestante: NIVELES[p.nivel].duracionS }
+  return { ...base, tiempoRestante: 0, tienda: true }
 }
+
+export function salirDeTienda(p: Partida): Partida {
+  if (!p.tienda) return p
+  if (p.nivel >= NIVELES.length) return { ...p, tienda: false, jefe: true }
+  return { ...p, tienda: false, nivel: p.nivel + 1, tiempoRestante: NIVELES[p.nivel].duracionS }
+}
+
+export function recogerMonedas(p: Partida, cantidad: number): Partida {
+  return { ...p, monedas: p.monedas + cantidad }
+}
+
+// null = no disponible (al máximo, vidas llenas o ya tiene escudo)
+export function costoMejora(p: Partida, tipo: TipoMejora): number | null {
+  const { costos } = MEJORAS[tipo]
+  if (tipo === 'vida') return p.vidas >= VIDAS_MAX ? null : costos[0]
+  if (tipo === 'escudo') return p.escudo ? null : costos[0]
+  return costos[p.mejoras[tipo]] ?? null
+}
+
+export function comprar(p: Partida, tipo: TipoMejora): Partida {
+  const costo = costoMejora(p, tipo)
+  if (costo === null || p.monedas < costo) return p
+  const q = { ...p, monedas: p.monedas - costo, mejoras: { ...p.mejoras, [tipo]: p.mejoras[tipo] + 1 } }
+  if (tipo === 'vida') return { ...q, vidas: q.vidas + 1 }
+  if (tipo === 'escudo') return { ...q, escudo: true }
+  return q
+}
+
+export const danioBala = (p: Partida) => 1 + p.mejoras.potencia
+export const cadenciaMs = (p: Partida) => Math.round(CADENCIA_BASE_MS * 0.8 ** p.mejoras.cadencia)
+export const radioIman = (p: Partida) => 90 + 80 * p.mejoras.iman
+export const alas = (p: Partida) => p.mejoras.alas
 
 // `azar` en [0, 1): se inyecta para poder probarlo sin Math.random
 export function elegirEnemigo(nivel: Nivel, azar: number): TipoEnemigo {

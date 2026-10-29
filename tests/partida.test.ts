@@ -15,6 +15,15 @@ import {
   multiplicador,
   nuevaPartida,
   recibirGolpe,
+  MEJORAS,
+  alas,
+  cadenciaMs,
+  comprar,
+  costoMejora,
+  danioBala,
+  radioIman,
+  recogerMonedas,
+  salirDeTienda,
 } from '../src/logica/partida'
 
 const conCombo = (combo: number) => ({ ...nuevaPartida(), combo, comboTiempo: COMBO_VENTANA_S })
@@ -96,15 +105,20 @@ describe('power-ups', () => {
 })
 
 describe('niveles y jefe', () => {
-  it('al acabarse el tiempo pasa al siguiente nivel', () => {
+  it('al acabarse el tiempo se abre el hangar y el reloj se detiene', () => {
     const p = avanzarTiempo(nuevaPartida(), NIVELES[0].duracionS)
-    expect(p.nivel).toBe(2)
-    expect(p.tiempoRestante).toBe(NIVELES[1].duracionS)
+    expect(p).toMatchObject({ tienda: true, nivel: 1 })
+    expect(avanzarTiempo(p, 10)).toMatchObject({ tienda: true, nivel: 1, tiempoRestante: 0 })
   })
 
-  it('al acabar el último nivel aparece el jefe en vez de ganar', () => {
-    const p = avanzarTiempo({ ...nuevaPartida(), nivel: NIVELES.length, tiempoRestante: 1 }, 2)
-    expect(p).toMatchObject({ jefe: true, terminada: false, nivel: NIVELES.length })
+  it('al salir del hangar empieza el siguiente nivel', () => {
+    const p = salirDeTienda(avanzarTiempo(nuevaPartida(), NIVELES[0].duracionS))
+    expect(p).toMatchObject({ tienda: false, nivel: 2, tiempoRestante: NIVELES[1].duracionS })
+  })
+
+  it('al salir del hangar del último nivel aparece el jefe en vez de ganar', () => {
+    const p = salirDeTienda(avanzarTiempo({ ...nuevaPartida(), nivel: NIVELES.length, tiempoRestante: 1 }, 2))
+    expect(p).toMatchObject({ jefe: true, tienda: false, terminada: false, nivel: NIVELES.length })
   })
 
   it('durante el jefe el tiempo no hace avanzar de nivel', () => {
@@ -174,5 +188,63 @@ describe('dificultad', () => {
     expect(DIFICULTADES.dificil.velocidad).toBeGreaterThan(DIFICULTADES.normal.velocidad)
     expect(DIFICULTADES.dificil.intervalo).toBeLessThan(DIFICULTADES.normal.intervalo)
     expect(DIFICULTADES.facil.velocidad).toBeLessThan(DIFICULTADES.normal.velocidad)
+  })
+})
+
+describe('monedas y hangar', () => {
+  const rica = (monedas = 1000) => ({ ...nuevaPartida(), monedas })
+
+  it('empieza sin monedas ni mejoras', () => {
+    const p = nuevaPartida()
+    expect(p.monedas).toBe(0)
+    expect(Object.values(p.mejoras).every((n) => n === 0)).toBe(true)
+  })
+
+  it('recoger monedas las suma', () => {
+    expect(recogerMonedas(nuevaPartida(), 3).monedas).toBe(3)
+  })
+
+  it('comprar descuenta el costo y sube el nivel de la mejora', () => {
+    const p = comprar(rica(100), 'potencia')
+    expect(p.monedas).toBe(100 - MEJORAS.potencia.costos[0])
+    expect(p.mejoras.potencia).toBe(1)
+    expect(costoMejora(p, 'potencia')).toBe(MEJORAS.potencia.costos[1])
+  })
+
+  it('sin monedas suficientes no compra', () => {
+    const p = rica(MEJORAS.potencia.costos[0] - 1)
+    expect(comprar(p, 'potencia')).toEqual(p)
+  })
+
+  it('una mejora al máximo no se puede comprar más', () => {
+    let p = rica()
+    for (let i = 0; i < MEJORAS.alas.costos.length; i++) p = comprar(p, 'alas')
+    expect(costoMejora(p, 'alas')).toBeNull()
+    expect(comprar(p, 'alas')).toEqual(p)
+  })
+
+  it('reparar suma una vida y no se ofrece con vidas al máximo', () => {
+    expect(comprar(rica(), 'vida').vidas).toBe(4)
+    expect(costoMejora({ ...rica(), vidas: VIDAS_MAX }, 'vida')).toBeNull()
+  })
+
+  it('el escudo se compra solo si no lo tienes', () => {
+    const p = comprar(rica(), 'escudo')
+    expect(p.escudo).toBe(true)
+    expect(costoMejora(p, 'escudo')).toBeNull()
+  })
+
+  it('las mejoras cambian las estadísticas de la nave', () => {
+    let p = rica()
+    const base = { danio: danioBala(p), cadencia: cadenciaMs(p), iman: radioIman(p), alas: alas(p) }
+    for (const t of ['potencia', 'cadencia', 'iman', 'alas'] as const) p = comprar(p, t)
+    expect(danioBala(p)).toBe(base.danio + 1)
+    expect(cadenciaMs(p)).toBeLessThan(base.cadencia)
+    expect(radioIman(p)).toBeGreaterThan(base.iman)
+    expect(alas(p)).toBe(base.alas + 1)
+  })
+
+  it('cada enemigo da al menos una moneda', () => {
+    for (const e of Object.values(ENEMIGOS)) expect(e.monedas).toBeGreaterThanOrEqual(1)
   })
 })
