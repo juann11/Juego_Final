@@ -13,11 +13,13 @@ import {
   derrotarJefe,
   destruir,
   elegirEnemigo,
+  intervaloDisparo,
   multiplicador,
   nuevaPartida,
   radioIman,
   recogerMonedas,
   salirDeTienda,
+  vidaEnemigo,
   vidaJefe,
   type Dificultad,
   recibirGolpe,
@@ -36,6 +38,11 @@ const VEL_BALA = 650
 const POWERUPS: TipoPowerUp[] = ['triple', 'triple', 'escudo', 'vida']
 const TEXTURA_POWERUP: Record<TipoPowerUp, string> = { triple: 'pu-triple', escudo: 'pu-escudo', vida: 'corazon' }
 const NOMBRE_POWERUP: Record<TipoPowerUp, string> = { triple: '¡DISPARO TRIPLE!', escudo: '¡ESCUDO!', vida: '¡VIDA EXTRA!' }
+const ORO = 0xffd700 // tinte de los enemigos élite
+const ESCALA_ENEMIGO: Partial<Record<TipoEnemigo, number>> = { acorazado: 1.7, orbe: 1.5 }
+const VELOCIDAD_RELATIVA: Partial<Record<TipoEnemigo, number>> = { zigzag: 0.7, kamikaze: 0.8, acorazado: 0.45, orbe: 0.6 }
+// enemigos que se detienen a atacar y cuántos ms se quedan
+const ESTACIONARIO_MS = { tirador: 6000, acorazado: 8000, orbe: 7000 }
 
 export class Juego extends Phaser.Scene {
   partida!: Partida // pública: el Hangar compra sobre ella
@@ -299,49 +306,97 @@ export class Juego extends Phaser.Scene {
 
   private lanzarEnemigo() {
     const nivel = NIVELES[this.partida.nivel - 1]
+    if (Math.random() < nivel.formacion) return this.lanzarFormacion()
     const tipo = elegirEnemigo(nivel, Math.random())
-    const x = tipo === 'zigzag' ? Phaser.Math.Between(110, ANCHO - 110) : Phaser.Math.Between(30, ANCHO - 30)
-    const e = this.enemigos.create(x, -40, tipo) as Sprite
-    e.setData({ tipo, vida: ENEMIGOS[tipo].vida, baseX: x, t0: this.time.now })
-    const v = nivel.velocidad * this.dif.velocidad * Phaser.Math.FloatBetween(0.85, 1.15)
+    const margen = tipo === 'zigzag' ? 110 : tipo === 'acorazado' ? 70 : 30
+    this.crearEnemigo(tipo, Phaser.Math.Between(margen, ANCHO - margen), -40, Math.random() < nivel.elite)
+  }
+
+  // Escuadrón de 5 drones en V (la punta va adelante); bajan a la misma velocidad para mantener la forma.
+  private lanzarFormacion() {
+    const cx = Phaser.Math.Between(110, ANCHO - 110)
+    for (const dx of [-80, -40, 0, 40, 80]) this.crearEnemigo('dron', cx + dx, -40 - Math.abs(dx) * 0.7, false, 0.9)
+  }
+
+  private crearEnemigo(tipo: TipoEnemigo, x: number, y: number, elite: boolean, factorVel = Phaser.Math.FloatBetween(0.85, 1.15)) {
+    const { nivel: n, dificultad } = this.partida
+    const e = this.enemigos.create(x, y, tipo) as Sprite
+    const vida = vidaEnemigo(tipo, n, dificultad, elite)
+    e.setData({ tipo, vida, vidaMax: vida, elite, baseX: x, t0: this.time.now })
+    const v = NIVELES[n - 1].velocidad * this.dif.velocidad * factorVel
 
     if (tipo === 'meteorito') {
       e.setScale(Phaser.Math.FloatBetween(1, 1.6))
       e.setVelocity(Phaser.Math.Between(-40, 40), v * 0.8).setAngularVelocity(Phaser.Math.Between(-150, 150))
     } else {
-      e.setScale(1.3).setVelocityY(tipo === 'zigzag' ? v * 0.7 : tipo === 'kamikaze' ? v * 0.8 : v)
+      e.setScale((ESCALA_ENEMIGO[tipo] ?? 1.3) * (elite ? 1.2 : 1)).setVelocityY(v * (VELOCIDAD_RELATIVA[tipo] ?? 1))
     }
-    const disparoMs = ENEMIGOS[tipo].disparoMs
-    if (disparoMs) e.setData('proxDisparo', this.time.now + Phaser.Math.Between(400, disparoMs))
-    if (tipo === 'tirador') e.setData({ alto: Phaser.Math.Between(110, 260), salida: 0 })
+    const intervalo = intervaloDisparo(tipo, n, dificultad)
+    if (intervalo) e.setData('proxDisparo', this.time.now + Phaser.Math.Between(400, intervalo))
+    if (tipo in ESTACIONARIO_MS) e.setData({ alto: Phaser.Math.Between(110, 250), salida: 0 })
     if (tipo === 'kamikaze') e.setData({ alto: Phaser.Math.Between(120, 280), fase: 'baja' })
+    if (tipo === 'orbe') e.setAngularVelocity(90)
+    // brillo dorado (solo WebGL; en Canvas preFX no existe y queda solo el tinte)
+    if (elite) e.setTint(ORO).preFX?.addGlow(ORO, 6, 0, false, 0.1, 12)
+    if (vida >= 4) this.crearBarraVida(e)
+  }
+
+  // Barra de vida sobre los enemigos resistentes; se destruye junto con el enemigo.
+  private crearBarraVida(e: Sprite) {
+    const fondo = this.add.rectangle(0, 0, 40, 6, 0x000000, 0.7).setOrigin(0, 0.5)
+    const relleno = this.add.rectangle(1, 0, 38, 4, e.getData('elite') ? ORO : COLOR.verde).setOrigin(0, 0.5)
+    const barra = this.add.container(0, 0, [fondo, relleno]).setDepth(4)
+    e.setData({ barra, barraRelleno: relleno })
+    e.once(Phaser.GameObjects.Events.DESTROY, () => barra.destroy())
   }
 
   private moverEnemigos() {
     const ahora = this.time.now
+    const { nivel, dificultad } = this.partida
     for (const e of this.enemigos.getChildren() as Sprite[]) {
       const tipo = e.getData('tipo') as TipoEnemigo
       if (tipo === 'zigzag') e.x = e.getData('baseX') + Math.sin((ahora - e.getData('t0')) / 280) * 80
       if (tipo === 'kamikaze') this.moverKamikaze(e, ahora)
-      if (tipo === 'tirador') this.moverTirador(e, ahora)
+      if (tipo in ESTACIONARIO_MS) this.moverEstacionario(e, ahora)
+      e.getData('barra')?.setPosition(e.x - 20, e.y - e.displayHeight / 2 - 8)
 
-      // dron dispara recto; zigzag y tirador apuntan a la nave (solo si están en pantalla)
-      const disparoMs = ENEMIGOS[tipo].disparoMs
-      const puede = tipo !== 'tirador' || (e.getData('salida') && ahora < e.getData('salida'))
-      if (!disparoMs || !puede || e.y < 30 || e.y > ALTO * 0.6 || ahora < e.getData('proxDisparo')) continue
-      if (tipo === 'dron') (this.balasEnemigas.create(e.x, e.y + 20, 'balaEnemiga') as Sprite).setVelocityY(260)
-      else this.dispararA(e.x, e.y + 24, 280)
-      e.setData('proxDisparo', ahora + disparoMs * this.dif.intervalo)
+      // solo atacan dentro de la parte alta de la pantalla; los estacionarios, mientras están quietos
+      const intervalo = intervaloDisparo(tipo, nivel, dificultad)
+      const quieto = !(tipo in ESTACIONARIO_MS) || (e.getData('salida') && ahora < e.getData('salida'))
+      if (!intervalo || !quieto || e.y < 30 || e.y > ALTO * 0.6 || ahora < e.getData('proxDisparo')) continue
+      this.atacar(e, tipo)
+      e.setData('proxDisparo', ahora + intervalo)
     }
   }
 
-  // El tirador baja, se queda quieto disparando unos segundos y luego se va.
-  private moverTirador(e: Sprite, ahora: number) {
+  private atacar(e: Sprite, tipo: TipoEnemigo) {
+    const haciaNave = Phaser.Math.Angle.Between(e.x, e.y, this.nave.x, this.nave.y)
+    const abajo = Math.PI / 2
+    if (tipo === 'dron') this.abanico(e.x, e.y + 20, 1, abajo, 0, 260)
+    if (tipo === 'zigzag') this.abanico(e.x, e.y + 20, 1, haciaNave, 0, 280)
+    if (tipo === 'tirador') this.abanico(e.x, e.y + 24, 3, haciaNave, Phaser.Math.DegToRad(30), 300)
+    if (tipo === 'acorazado') this.abanico(e.x, e.y + 30, 5, abajo, Phaser.Math.DegToRad(70), 220)
+    // anillo de 10 balas que va girando con el orbe
+    if (tipo === 'orbe') this.abanico(e.x, e.y, 10, e.rotation, Math.PI * 2 * 0.9, 170)
+  }
+
+  // n balas repartidas en `apertura` radianes alrededor del ángulo `centro`
+  private abanico(x: number, y: number, n: number, centro: number, apertura: number, velocidad: number) {
+    for (let i = 0; i < n; i++) {
+      const ang = n === 1 ? centro : centro - apertura / 2 + (apertura / (n - 1)) * i
+      const b = this.balasEnemigas.create(x, y, 'balaEnemiga') as Sprite
+      b.setVelocity(Math.cos(ang) * velocidad, Math.sin(ang) * velocidad)
+    }
+  }
+
+  // Tirador, acorazado y orbe bajan, se quedan quietos atacando un rato y luego se van.
+  private moverEstacionario(e: Sprite, ahora: number) {
+    const tipo = e.getData('tipo') as keyof typeof ESTACIONARIO_MS
     if (!e.getData('salida') && e.y >= e.getData('alto')) {
-      e.setVelocityY(0).setData({ salida: ahora + 6000, proxDisparo: ahora + 500 })
+      e.setVelocityY(0).setData({ salida: ahora + ESTACIONARIO_MS[tipo], proxDisparo: ahora + 500 })
     }
     const salida = e.getData('salida')
-    if (salida && ahora > salida) e.setVelocityY(NIVELES[this.partida.nivel - 1].velocidad * this.dif.velocidad)
+    if (salida && ahora > salida) e.setVelocityY(NIVELES[this.partida.nivel - 1].velocidad * this.dif.velocidad * 0.6)
   }
 
   // El kamikaze baja, se detiene parpadeando en rojo (aviso) y se lanza en picada hacia la nave.
@@ -365,20 +420,25 @@ export class Juego extends Phaser.Scene {
     bala.destroy()
     const vida = enemigo.getData('vida') - danioBala(this.partida)
     enemigo.setData('vida', vida)
+    const relleno = enemigo.getData('barraRelleno') as Phaser.GameObjects.Rectangle | undefined
+    if (relleno) relleno.width = 38 * Math.max(0, vida / enemigo.getData('vidaMax'))
     this.destello(enemigo)
     if (vida > 0) return sonar('impacto')
 
     const tipo = enemigo.getData('tipo') as TipoEnemigo
+    const elite = enemigo.getData('elite') as boolean
+    const grande = tipo === 'acorazado' || tipo === 'orbe' || elite
     const multAntes = multiplicador(this.partida)
     const puntosAntes = this.partida.puntos
-    this.partida = destruir(this.partida, tipo)
+    this.partida = destruir(this.partida, tipo, elite)
     const mult = multiplicador(this.partida)
     sonar('explosion')
-    this.explosion(enemigo.x, enemigo.y, tipo === 'meteorito' ? 14 : 10)
-    this.textoFlotante(enemigo.x, enemigo.y, `+${this.partida.puntos - puntosAntes}`, mult > 1 ? '#facc15' : COLOR.texto)
+    this.explosion(enemigo.x, enemigo.y, grande ? 24 : tipo === 'meteorito' ? 14 : 10)
+    if (grande) this.cameras.main.shake(150, 0.006)
+    this.textoFlotante(enemigo.x, enemigo.y, `+${this.partida.puntos - puntosAntes}`, mult > 1 || elite ? '#facc15' : COLOR.texto)
     if (mult > multAntes) this.textoFlotante(ANCHO / 2, ALTO / 2, `¡COMBO x${mult}!`, COLOR.textoVerde, 40)
-    if (Math.random() < this.dif.probPowerUp) this.soltarPowerUp(enemigo.x, enemigo.y)
-    this.soltarMonedas(enemigo.x, enemigo.y, ENEMIGOS[tipo].monedas)
+    if (Math.random() < this.dif.probPowerUp * (elite ? 3 : 1)) this.soltarPowerUp(enemigo.x, enemigo.y)
+    this.soltarMonedas(enemigo.x, enemigo.y, ENEMIGOS[tipo].monedas * (elite ? 3 : 1))
     enemigo.destroy()
   }
 
@@ -518,6 +578,7 @@ export class Juego extends Phaser.Scene {
       if (!objetivo.active) return
       objetivo.clearTint()
       if (objetivo === this.jefe && objetivo.getData('vida') <= this.vidaJefeMax / 2) objetivo.setTint(0xff8888)
+      if (objetivo.getData('elite')) objetivo.setTint(ORO)
     })
   }
 

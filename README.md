@@ -2,7 +2,19 @@
 
 Shooter espacial para Android: pilotas un caza que dispara solo, derribas escuadrones enemigos durante 3 niveles y al final enfrentas al jefe. Tienes 3 vidas (hasta 5 con power-ups; depende de la dificultad).
 
-- **Enemigos que atacan:** dron (dispara recto), zigzag (ondea y te apunta), kamikaze (se marca en rojo y se lanza en picada), tirador (se detiene y te dispara) y meteorito (resistente). Cada nivel trae enemigos nuevos y más velocidad.
+- **Enemigos que atacan:**
+
+  | Enemigo | Vida base | Ataque |
+  |---|---|---|
+  | Dron | 2 | Dispara recto; a veces baja en escuadrón de 5 en V |
+  | Zigzag | 4 | Ondea y te apunta |
+  | Meteorito | 4 | Choca |
+  | Kamikaze | 3 | Se marca en rojo y se lanza en picada |
+  | Tirador | 7 | Se detiene y dispara ráfagas de 3 |
+  | Orbe | 9 | Gira y suelta anillos de 10 balas |
+  | Acorazado | 14 | Crucero lento que dispara abanicos de 5 |
+
+  La vida sube un 25% y la cadencia un 15% por nivel. **Élites** (brillo dorado): doble vida, doble puntos y triple monedas; salen más en niveles altos. Los enemigos con 4+ de vida muestran barra de vida.
 - **Monedas y Hangar:** los enemigos sueltan monedas (se atraen al pasar cerca). Al terminar cada nivel recibes un bono y se abre el **Hangar** para mejorar la nave antes del siguiente nivel o del jefe:
 
   | Mejora | Efecto | Precios |
