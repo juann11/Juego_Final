@@ -1,8 +1,7 @@
 import Phaser from 'phaser'
 import { ANCHO, COLOR, boton, fondoEstrellas, irA, texto, titulo } from '../ui'
 
-// Cambia estos nombres por los del equipo.
-const EQUIPO = ['Integrante 1', 'Integrante 2', 'Integrante 3']
+const EQUIPO = ['Juan José Ospina', 'JJ']
 
 const SECCIONES: [string, string[]][] = [
   ['EQUIPO', EQUIPO],
