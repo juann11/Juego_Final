@@ -4,7 +4,7 @@ import type { Registro } from '../logica/puntaje'
 import { ANCHO, COLOR, boton, fondoEstrellas, irA, texto, titulo } from '../ui'
 
 interface Datos {
-  resultado?: Registro & { gano: boolean; nivel: number }
+  resultado?: Registro & { gano: boolean; nivel: number; derribados: number }
 }
 
 export class Puntajes extends Phaser.Scene {
@@ -28,7 +28,8 @@ export class Puntajes extends Phaser.Scene {
         duration: 900,
         onUpdate: (tw) => puntos.setText(`${Math.round(tw.getValue() ?? 0)}`),
       })
-      texto(this, ANCHO / 2, y + 150, `Llegaste al nivel ${r.nivel}`, 30, COLOR.textoSuave)
+      const logro = r.gano ? '¡Derrotaste al jefe!' : `Llegaste al nivel ${r.nivel}`
+      texto(this, ANCHO / 2, y + 150, `${logro} · ${r.derribados} derribos`, 26, COLOR.textoSuave)
       y += 220
     }
 

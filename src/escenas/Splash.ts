@@ -12,7 +12,7 @@ export class Splash extends Phaser.Scene {
     fondoEstrellas(this)
 
     const nave = this.add.image(ANCHO / 2, ALTO / 2 - 140, 'nave').setScale(2).setAlpha(0)
-    const logo = titulo(this, ANCHO / 2, ALTO / 2, 'ESQUIVA\nESTELAR', 34, COLOR.textoVerde).setScale(0)
+    const logo = titulo(this, ANCHO / 2, ALTO / 2, 'ESCUADRÓN\nESTELAR', 34, COLOR.textoVerde).setScale(0)
     const sub = texto(this, ANCHO / 2, ALTO / 2 + 90, 'UPB · Aplicaciones Móviles', 28, COLOR.textoSuave).setAlpha(0)
 
     this.tweens.add({ targets: logo, scale: 1, duration: 700, ease: 'Back.easeOut' })

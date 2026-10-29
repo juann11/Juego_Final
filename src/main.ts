@@ -5,6 +5,7 @@ import Phaser from 'phaser'
 import { Creditos } from './escenas/Creditos'
 import { Home } from './escenas/Home'
 import { Juego } from './escenas/Juego'
+import { Pausa } from './escenas/Pausa'
 import { Puntajes } from './escenas/Puntajes'
 import { Splash } from './escenas/Splash'
 import { ALTO, ANCHO, COLOR } from './ui'
@@ -20,7 +21,7 @@ Promise.all([document.fonts.load('16px "Press Start 2P"'), document.fonts.load('
     pixelArt: true,
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
     physics: { default: 'arcade' },
-    scene: [Splash, Home, Juego, Puntajes, Creditos],
+    scene: [Splash, Home, Juego, Pausa, Puntajes, Creditos],
   })
   // Solo en desarrollo: acceso desde la consola para depurar
   if (import.meta.env.DEV) Object.assign(window, { juego })

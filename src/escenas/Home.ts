@@ -19,7 +19,7 @@ export class Home extends Phaser.Scene {
     const nave = this.add.image(ANCHO / 2, 300, secreto ? 'gato' : 'nave').setScale(2.5)
     this.tweens.add({ targets: nave, y: 320, duration: 1200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' })
 
-    const logo = titulo(this, ANCHO / 2, 140, 'ESQUIVA\nESTELAR', 32, COLOR.textoVerde)
+    const logo = titulo(this, ANCHO / 2, 140, 'ESCUADRÓN\nESTELAR', 32, COLOR.textoVerde)
     this.tweens.add({ targets: logo, scale: 1.04, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' })
 
     // Easter egg: tocar el título 5 veces activa/desactiva el gato espacial.
