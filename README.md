@@ -2,7 +2,19 @@
 
 Shooter espacial para Android: pilotas un caza que dispara solo, derribas escuadrones enemigos durante 3 niveles y al final enfrentas al jefe. Tienes 3 vidas (hasta 5 con power-ups; depende de la dificultad).
 
-- **Enemigos:** dron (baja recto), zigzag (ondea), tirador (se detiene y te apunta) y meteorito (resistente). Cada nivel trae enemigos nuevos y más velocidad.
+- **Enemigos que atacan:** dron (dispara recto), zigzag (ondea y te apunta), kamikaze (se marca en rojo y se lanza en picada), tirador (se detiene y te dispara) y meteorito (resistente). Cada nivel trae enemigos nuevos y más velocidad.
+- **Monedas y Hangar:** los enemigos sueltan monedas (se atraen al pasar cerca). Al terminar cada nivel recibes un bono y se abre el **Hangar** para mejorar la nave antes del siguiente nivel o del jefe:
+
+  | Mejora | Efecto | Precios |
+  |---|---|---|
+  | Potencia | +1 daño por bala | 25 · 60 · 110 |
+  | Cadencia | Disparas un 20% más rápido por nivel | 20 · 50 · 90 |
+  | Alas | Naves de apoyo que disparan contigo | 40 · 90 |
+  | Imán | Atrae monedas desde más lejos | 15 · 35 |
+  | Reparar | +1 vida (recomprable) | 30 |
+  | Escudo | Bloquea un golpe (recomprable) | 20 |
+
+  Se ajusta en `MEJORAS` de `src/logica/partida.ts`.
 - **Jefe final:** barra de vida, ráfagas en abanico, disparos apuntados y modo furia a mitad de vida.
 - **Power-ups:** disparo triple (10 s), escudo (absorbe un golpe) y vida extra.
 - **Combos:** derribos seguidos suben el multiplicador hasta x5; un golpe o 2.5 s sin derribar lo reinician.
@@ -12,7 +24,7 @@ Shooter espacial para Android: pilotas un caza que dispara solo, derribas escuad
   |---|---|---|---|
   | Velocidad enemigos | ×0.8 | ×1 | ×1.25 |
   | Tiempo entre enemigos | ×1.3 | ×1 | ×0.75 |
-  | Vida del jefe | 84 | 140 | 210 |
+  | Vida del jefe | 132 | 220 | 330 |
   | Vidas iniciales | 5 | 3 | 2 |
   | Prob. power-up | 15% | 10% | 7% |
   | Puntos | ×0.5 | ×1 | ×1.5 |
@@ -28,7 +40,8 @@ Entrega #4 - Final (Juego) · Aplicaciones Móviles · UPB.
 |---|---|
 | Splash | Logo animado y barra de carga (toca para saltar) |
 | Home | Jugar, Puntajes, Créditos, nombre del piloto y sonido on/off |
-| Juego | 3 niveles por tiempo + jefe final, vidas, combos y power-ups (con capa de Pausa) |
+| Juego | 3 niveles por tiempo + jefe final, vidas, combos, power-ups y monedas (con capa de Pausa) |
+| Hangar | Tienda de mejoras entre niveles |
 | Puntajes | Resultado, derribos y top 5 guardado |
 | Créditos | Equipo, tecnologías y uso de IA |
 
@@ -62,8 +75,8 @@ npx cap open android   # abrir en Android Studio
 
 ```
 src/
-  logica/      partida.ts (niveles, vidas, combos, power-ups, jefe), puntaje.ts (top 5)
-  escenas/     Splash, Home, Juego, Pausa, Puntajes, Creditos
+  logica/      partida.ts (niveles, vidas, combos, power-ups, monedas, mejoras, jefe), puntaje.ts (top 5)
+  escenas/     Splash, Home, Juego, Pausa, Hangar, Puntajes, Creditos
   almacen.ts   persistencia
   sonido.ts    efectos y música con Web Audio
   texturas.ts  sprites pixel art
