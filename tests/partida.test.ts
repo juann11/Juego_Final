@@ -24,6 +24,8 @@ import {
   radioIman,
   recogerMonedas,
   salirDeTienda,
+  intervaloDisparo,
+  vidaEnemigo,
 } from '../src/logica/partida'
 
 const conCombo = (combo: number) => ({ ...nuevaPartida(), combo, comboTiempo: COMBO_VENTANA_S })
@@ -246,5 +248,47 @@ describe('monedas y hangar', () => {
 
   it('cada enemigo da al menos una moneda', () => {
     for (const e of Object.values(ENEMIGOS)) expect(e.monedas).toBeGreaterThanOrEqual(1)
+  })
+})
+
+describe('enemigos más duros', () => {
+  it('los enemigos nuevos aguantan más que el dron y el acorazado es el más duro', () => {
+    expect(ENEMIGOS.acorazado.vida).toBeGreaterThan(ENEMIGOS.dron.vida)
+    expect(ENEMIGOS.orbe.vida).toBeGreaterThan(ENEMIGOS.dron.vida)
+    const otros = Object.entries(ENEMIGOS).filter(([t]) => t !== 'acorazado')
+    expect(otros.every(([, e]) => e.vida < ENEMIGOS.acorazado.vida)).toBe(true)
+  })
+
+  it('la vida de un enemigo sube con el nivel', () => {
+    expect(vidaEnemigo('zigzag', 3, 'normal', false)).toBeGreaterThan(vidaEnemigo('zigzag', 1, 'normal', false))
+    expect(vidaEnemigo('dron', 1, 'normal', false)).toBe(ENEMIGOS.dron.vida)
+  })
+
+  it('la vida depende de la dificultad', () => {
+    expect(vidaEnemigo('tirador', 2, 'dificil', false)).toBeGreaterThan(vidaEnemigo('tirador', 2, 'normal', false))
+    expect(vidaEnemigo('tirador', 2, 'facil', false)).toBeLessThan(vidaEnemigo('tirador', 2, 'normal', false))
+  })
+
+  it('un élite tiene el doble de vida y nunca menos de 1', () => {
+    expect(vidaEnemigo('orbe', 2, 'normal', true)).toBe(2 * vidaEnemigo('orbe', 2, 'normal', false))
+    expect(vidaEnemigo('dron', 1, 'facil', false)).toBeGreaterThanOrEqual(1)
+  })
+
+  it('derribar un élite da el doble de puntos', () => {
+    const normal = destruir(nuevaPartida(), 'zigzag').puntos
+    expect(destruir(nuevaPartida(), 'zigzag', true).puntos).toBe(normal * 2)
+  })
+
+  it('en niveles más altos disparan más seguido', () => {
+    expect(intervaloDisparo('dron', 3, 'normal')).toBeLessThan(intervaloDisparo('dron', 1, 'normal'))
+    expect(intervaloDisparo('dron', 1, 'normal')).toBe(ENEMIGOS.dron.disparoMs)
+    expect(intervaloDisparo('meteorito', 1, 'normal')).toBeNull()
+  })
+
+  it('cada nivel tiene más probabilidad de élites y formaciones', () => {
+    for (let i = 1; i < NIVELES.length; i++) {
+      expect(NIVELES[i].elite).toBeGreaterThan(NIVELES[i - 1].elite)
+      expect(NIVELES[i].formacion).toBeGreaterThanOrEqual(NIVELES[i - 1].formacion)
+    }
   })
 })

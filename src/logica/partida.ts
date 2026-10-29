@@ -1,17 +1,22 @@
 // Lógica pura de la partida: sin Phaser, para poder probarla con Vitest.
 
-export type TipoEnemigo = 'dron' | 'zigzag' | 'tirador' | 'meteorito' | 'kamikaze'
+export type TipoEnemigo = 'dron' | 'zigzag' | 'tirador' | 'meteorito' | 'kamikaze' | 'acorazado' | 'orbe'
 export type TipoPowerUp = 'triple' | 'escudo' | 'vida'
 export type TipoMejora = 'potencia' | 'cadencia' | 'alas' | 'iman' | 'vida' | 'escudo'
 
 // disparoMs: cada cuánto dispara (sin él, no dispara)
 export const ENEMIGOS: Record<TipoEnemigo, { vida: number; puntos: number; monedas: number; disparoMs?: number }> = {
-  dron: { vida: 1, puntos: 10, monedas: 1, disparoMs: 2800 },
-  meteorito: { vida: 3, puntos: 15, monedas: 1 },
-  zigzag: { vida: 2, puntos: 25, monedas: 2, disparoMs: 2000 },
-  kamikaze: { vida: 2, puntos: 30, monedas: 2 },
-  tirador: { vida: 4, puntos: 40, monedas: 3, disparoMs: 1500 },
+  dron: { vida: 2, puntos: 10, monedas: 1, disparoMs: 2800 },
+  meteorito: { vida: 4, puntos: 15, monedas: 1 },
+  zigzag: { vida: 4, puntos: 25, monedas: 2, disparoMs: 2000 },
+  kamikaze: { vida: 3, puntos: 30, monedas: 2 },
+  tirador: { vida: 7, puntos: 45, monedas: 3, disparoMs: 1600 },
+  orbe: { vida: 9, puntos: 60, monedas: 4, disparoMs: 2000 },
+  acorazado: { vida: 14, puntos: 90, monedas: 6, disparoMs: 2200 },
 }
+
+export const SUBIDA_VIDA_POR_NIVEL = 0.25 // +25% de vida enemiga por cada nivel
+export const SUBIDA_CADENCIA_POR_NIVEL = 0.15 // y disparan un 15% más seguido
 
 // Hangar entre niveles: `costos[i]` es el precio del nivel i+1. Reparar y escudo se pueden recomprar.
 export const MEJORAS: Record<TipoMejora, { nombre: string; descripcion: string; costos: number[] }> = {
@@ -30,15 +35,27 @@ export type Dificultad = 'facil' | 'normal' | 'dificil'
 // Factores sobre los valores de NIVELES y JEFE; `puntos` compensa en el top 5 a quien juega más difícil.
 export const DIFICULTADES: Record<
   Dificultad,
-  { nombre: string; velocidad: number; intervalo: number; jefe: number; vidas: number; probPowerUp: number; puntos: number }
+  { nombre: string; velocidad: number; intervalo: number; jefe: number; vidaEnemigos: number; vidas: number; probPowerUp: number; puntos: number }
 > = {
-  facil: { nombre: 'FÁCIL', velocidad: 0.8, intervalo: 1.3, jefe: 0.6, vidas: 5, probPowerUp: 0.15, puntos: 0.5 },
-  normal: { nombre: 'NORMAL', velocidad: 1, intervalo: 1, jefe: 1, vidas: 3, probPowerUp: 0.1, puntos: 1 },
-  dificil: { nombre: 'DIFÍCIL', velocidad: 1.25, intervalo: 0.75, jefe: 1.5, vidas: 2, probPowerUp: 0.07, puntos: 1.5 },
+  facil: { nombre: 'FÁCIL', velocidad: 0.8, intervalo: 1.3, jefe: 0.6, vidaEnemigos: 0.75, vidas: 5, probPowerUp: 0.15, puntos: 0.5 },
+  normal: { nombre: 'NORMAL', velocidad: 1, intervalo: 1, jefe: 1, vidaEnemigos: 1, vidas: 3, probPowerUp: 0.1, puntos: 1 },
+  dificil: { nombre: 'DIFÍCIL', velocidad: 1.25, intervalo: 0.75, jefe: 1.5, vidaEnemigos: 1.3, vidas: 2, probPowerUp: 0.07, puntos: 1.5 },
 }
 
 export function vidaJefe(d: Dificultad): number {
   return Math.round(JEFE.vida * DIFICULTADES[d].jefe)
+}
+
+export function vidaEnemigo(tipo: TipoEnemigo, nivel: number, d: Dificultad, elite: boolean): number {
+  const base = ENEMIGOS[tipo].vida * (1 + SUBIDA_VIDA_POR_NIVEL * (nivel - 1)) * DIFICULTADES[d].vidaEnemigos
+  return Math.max(1, Math.round(base)) * (elite ? 2 : 1)
+}
+
+// null = ese enemigo no dispara
+export function intervaloDisparo(tipo: TipoEnemigo, nivel: number, d: Dificultad): number | null {
+  const ms = ENEMIGOS[tipo].disparoMs
+  if (!ms) return null
+  return Math.round((ms * DIFICULTADES[d].intervalo) / (1 + SUBIDA_CADENCIA_POR_NIVEL * (nivel - 1)))
 }
 
 export interface Nivel {
@@ -46,12 +63,20 @@ export interface Nivel {
   intervaloMs: number // cada cuánto aparece un enemigo
   duracionS: number // segundos que dura el nivel
   enemigos: Partial<Record<TipoEnemigo, number>> // pesos de aparición
+  elite: number // probabilidad de que un enemigo salga élite (dorado, x2 vida)
+  formacion: number // probabilidad de que en vez de un enemigo baje un escuadrón de 5 drones
 }
 
 export const NIVELES: Nivel[] = [
-  { velocidad: 170, intervaloMs: 800, duracionS: 30, enemigos: { dron: 70, meteorito: 30 } },
-  { velocidad: 210, intervaloMs: 650, duracionS: 35, enemigos: { dron: 35, zigzag: 30, kamikaze: 15, meteorito: 20 } },
-  { velocidad: 250, intervaloMs: 520, duracionS: 40, enemigos: { dron: 25, zigzag: 25, kamikaze: 15, tirador: 25, meteorito: 10 } },
+  { velocidad: 170, intervaloMs: 800, duracionS: 30, elite: 0.03, formacion: 0.06, enemigos: { dron: 60, zigzag: 15, meteorito: 25 } },
+  {
+    velocidad: 210, intervaloMs: 650, duracionS: 35, elite: 0.08, formacion: 0.1,
+    enemigos: { dron: 30, zigzag: 25, kamikaze: 15, meteorito: 15, acorazado: 6, tirador: 9 },
+  },
+  {
+    velocidad: 250, intervaloMs: 540, duracionS: 40, elite: 0.14, formacion: 0.14,
+    enemigos: { dron: 20, zigzag: 20, kamikaze: 15, tirador: 18, meteorito: 8, acorazado: 9, orbe: 10 },
+  },
 ]
 
 export const VIDAS_MAX = 5
@@ -115,11 +140,11 @@ export function recibirGolpe(p: Partida): Partida {
   return { ...p, vidas, combo: 0, terminada: vidas === 0 }
 }
 
-export function destruir(p: Partida, tipo: TipoEnemigo): Partida {
+export function destruir(p: Partida, tipo: TipoEnemigo, elite = false): Partida {
   if (p.terminada) return p
   return {
     ...p,
-    puntos: p.puntos + ganancia(p, ENEMIGOS[tipo].puntos),
+    puntos: p.puntos + ganancia(p, ENEMIGOS[tipo].puntos * (elite ? 2 : 1)),
     combo: p.combo + 1,
     comboTiempo: COMBO_VENTANA_S,
     derribados: p.derribados + 1,
