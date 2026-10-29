@@ -39,4 +39,6 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- vibración al recibir un golpe -->
+    <uses-permission android:name="android.permission.VIBRATE" />
 </manifest>

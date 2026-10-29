@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.upb.esquivaestelar',
-  appName: 'Esquiva Estelar',
+  appName: 'Escuadrón Estelar',
   webDir: 'dist'
 };
 

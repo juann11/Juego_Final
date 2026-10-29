@@ -1,6 +1,12 @@
-# Esquiva Estelar
+# Escuadrón Estelar
 
-Juego arcade para Android: pilotas una nave y esquivas meteoritos durante 3 niveles, cada uno más rápido. Tienes 3 vidas; aguanta el tiempo de cada nivel para pasar al siguiente.
+Shooter espacial para Android: pilotas un caza que dispara solo, derribas escuadrones enemigos durante 3 niveles y al final enfrentas al jefe. Tienes 3 vidas (hasta 5 con power-ups).
+
+- **Enemigos:** dron (baja recto), zigzag (ondea), tirador (se detiene y te apunta) y meteorito (resistente). Cada nivel trae enemigos nuevos y más velocidad.
+- **Jefe final:** barra de vida, ráfagas en abanico, disparos apuntados y modo furia a mitad de vida.
+- **Power-ups:** disparo triple (10 s), escudo (absorbe un golpe) y vida extra.
+- **Combos:** derribos seguidos suben el multiplicador hasta x5; un golpe o 2.5 s sin derribar lo reinician.
+- **Pausa** con botón o al salir de la app; música chiptune y vibración al recibir golpes.
 
 Entrega #4 - Final (Juego) · Aplicaciones Móviles · UPB.
 
@@ -10,8 +16,8 @@ Entrega #4 - Final (Juego) · Aplicaciones Móviles · UPB.
 |---|---|
 | Splash | Logo animado y barra de carga (toca para saltar) |
 | Home | Jugar, Puntajes, Créditos, nombre del piloto y sonido on/off |
-| Juego | 3 niveles por tiempo, 3 vidas, puntos por meteorito esquivado |
-| Puntajes | Resultado de la partida y top 5 guardado |
+| Juego | 3 niveles por tiempo + jefe final, vidas, combos y power-ups (con capa de Pausa) |
+| Puntajes | Resultado, derribos y top 5 guardado |
 | Créditos | Equipo, tecnologías y uso de IA |
 
 **Persistencia:** top 5, nombre del piloto, sonido y modo secreto se guardan en `localStorage` (funciona igual en la app Android).
@@ -44,10 +50,10 @@ npx cap open android   # abrir en Android Studio
 
 ```
 src/
-  logica/      partida.ts (niveles, vidas, tiempo), puntaje.ts (top 5)
-  escenas/     Splash, Home, Juego, Puntajes, Creditos
+  logica/      partida.ts (niveles, vidas, combos, power-ups, jefe), puntaje.ts (top 5)
+  escenas/     Splash, Home, Juego, Pausa, Puntajes, Creditos
   almacen.ts   persistencia
-  sonido.ts    efectos con Web Audio
+  sonido.ts    efectos y música con Web Audio
   texturas.ts  sprites pixel art
   ui.ts        paleta, fuentes, botones y transiciones
 tests/         Vitest
