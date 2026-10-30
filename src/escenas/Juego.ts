@@ -112,7 +112,10 @@ export class Juego extends Phaser.Scene {
 
     this.balas = this.physics.add.group()
     this.enemigos = this.physics.add.group()
-    this.balasEnemigas = this.physics.add.group()
+    // la bala se ve de 20 px pero choca como una de 12: más visible sin ser más difícil de esquivar
+    this.balasEnemigas = this.physics.add.group({
+      createCallback: (b) => (b.body as Phaser.Physics.Arcade.Body).setCircle(6, 4, 4),
+    })
     this.powerups = this.physics.add.group()
     this.monedas = this.physics.add.group()
     this.physics.add.overlap(this.balas, this.enemigos, (b, e) => this.impactar(b as Sprite, e as Sprite))

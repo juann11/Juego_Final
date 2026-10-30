@@ -6,6 +6,7 @@ const PALETA: Record<string, number> = {
   a: 0x2563eb,
   c: 0x38bdf8,
   r: 0xdc2626,
+  R: 0xff2d2d,
   o: 0xf97316,
   d: 0x7f1d1d,
   y: 0xfacc15,
@@ -115,7 +116,8 @@ const SPRITES: Record<string, string[]> = {
   moneda: ['.yyy.', 'yyoyy', 'yoyoy', 'yyoyy', '.yyy.'],
   iman: ['rr...rr', 'rr...rr', 'rr...rr', 'rr...rr', 'grrrrrg', '.rrrrr.'],
   bala: ['c', 'b', 'c'],
-  balaEnemiga: ['pp', 'pp'],
+  // borde rojo y centro blanco: tiene que destacar sobre las estrellas
+  balaEnemiga: ['.RR.', 'RbbR', 'RbbR', '.RR.'],
   'pu-triple': ['yyyyyyy', 'yc.c.cy', 'yc.c.cy', 'yc.c.cy', 'y.....y', 'yyyyyyy'],
   'pu-escudo': ['..ccc..', '.c...c.', 'c..b..c', 'c.bbb.c', 'c..b..c', '.c...c.', '..ccc..'],
   meteorito: [
