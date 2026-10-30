@@ -1,5 +1,6 @@
 import Phaser from 'phaser'
 import { cargar } from '../almacen'
+import { CAPITULOS } from '../logica/historia'
 import { sonar } from '../sonido'
 import { ALTO, ANCHO, COLOR, fondoEstrellas, irA, texto, titulo } from '../ui'
 
@@ -37,6 +38,7 @@ export class Intro extends Phaser.Scene {
     })
     fuego.startFollow(nave, 0, 85)
 
+    titulo(this, ANCHO / 2, 215, `${CAPITULOS[0].etiqueta}: ${CAPITULOS[0].titulo}`, 14, COLOR.textoVerde)
     this.escribir(`Piloto ${cargar('nombre', 'PILOTO')}:\nla flota enemiga se acerca.`)
     texto(this, ANCHO / 2, ALTO - 50, 'Toca para saltar', 26, COLOR.textoSuave)
     this.input.once('pointerdown', () => irA(this, 'Juego'))

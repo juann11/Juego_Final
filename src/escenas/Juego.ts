@@ -34,6 +34,7 @@ import {
   type TipoEnemigo,
   type TipoPowerUp,
 } from '../logica/partida'
+import { CAPITULOS, CAPITULO_JEFE, EPILOGO } from '../logica/historia'
 import { agregarPuntaje, type Registro } from '../logica/puntaje'
 import { detenerMusica, iniciarMusica, sonar } from '../sonido'
 import { ALTO, ANCHO, COLOR, fondoEstrellas, irA, texto, titulo } from '../ui'
@@ -153,7 +154,7 @@ export class Juego extends Phaser.Scene {
     if (this.partida.terminada) return
     const antes = this.partida
     this.partida = avanzarTiempo(this.partida, delta / 1000)
-    if (this.partida.tienda && !antes.tienda) this.completarNivel()
+    if (this.partida.tienda && !antes.tienda) this.completarNivel(antes.vidas)
     if (pideEvento(this.partida)) this.lanzarEvento()
     if (antes.sobrecargaS > 0 && this.partida.sobrecargaS === 0) {
       this.nave.clearTint()
@@ -275,7 +276,7 @@ export class Juego extends Phaser.Scene {
     this.tweens.add({ targets: this.hudMonedas, scale: { from: 1.4, to: 1 }, duration: 150 })
   }
 
-  private completarNivel() {
+  private completarNivel(vidasAntes: number) {
     this.generador?.remove()
     this.invulnerable = true
     sonar('victoria')
@@ -291,6 +292,7 @@ export class Juego extends Phaser.Scene {
     this.partida = recogerMonedas(this.partida, sueltas + bono)
     this.banner('¡NIVEL\nCOMPLETADO!', COLOR.textoVerde)
     this.textoFlotante(ANCHO / 2, ALTO / 2 + 40, `Bono +${bono} monedas`, '#facc15', 32)
+    if (this.partida.vidas > vidasAntes) this.textoFlotante(ANCHO / 2, ALTO / 2 + 90, '¡Nave reparada!', COLOR.textoVerde, 32)
     this.time.delayedCall(2000, () => {
       detenerMusica()
       this.scene.launch('Hangar')
@@ -354,7 +356,9 @@ export class Juego extends Phaser.Scene {
     const nivel = NIVELES[this.partida.nivel - 1]
     this.generador?.remove()
     this.generador = this.time.addEvent({ delay: nivel.intervaloMs * this.dif.intervalo, loop: true, callback: () => this.lanzarEnemigo() })
-    this.banner(`NIVEL ${this.partida.nivel}`)
+    const capitulo = CAPITULOS[this.partida.nivel - 1]
+    this.cameras.main.setBackgroundColor(capitulo.fondo)
+    this.banner(`NIVEL ${this.partida.nivel}\n${capitulo.titulo}`, COLOR.texto, 20)
   }
 
   private lanzarEnemigo() {
@@ -538,6 +542,7 @@ export class Juego extends Phaser.Scene {
 
   private aparecerJefe() {
     this.generador?.remove()
+    this.cameras.main.setBackgroundColor(CAPITULO_JEFE.fondo)
     sonar('alerta')
     this.banner('¡ALERTA!\nJEFE FINAL', COLOR.textoRojo)
     const jefe = this.physics.add.sprite(ANCHO / 2, -120, 'jefe').setScale(2).setDepth(1)
@@ -629,7 +634,11 @@ export class Juego extends Phaser.Scene {
       sonar(gano ? 'victoria' : 'fin')
       this.banner(gano ? '¡VICTORIA!' : 'GAME OVER', gano ? COLOR.textoVerde : COLOR.textoRojo)
     })
-    this.time.delayedCall(gano ? 3200 : 1800, () => irA(this, 'Puntajes', { resultado: { ...registro, gano, nivel, derribados } }))
+    const resultado = { ...registro, gano, nivel, derribados }
+    this.time.delayedCall(gano ? 3200 : 1800, () => {
+      if (!gano) return irA(this, 'Puntajes', { resultado })
+      irA(this, 'Historia', { capitulo: EPILOGO, alTerminar: (h: Phaser.Scene) => irA(h, 'Puntajes', { resultado }) })
+    })
   }
 
   private pausar() {
@@ -727,8 +736,8 @@ export class Juego extends Phaser.Scene {
     this.hudNivel.setText(`NIVEL ${p.nivel}/${NIVELES.length}`)
   }
 
-  private banner(mensaje: string, color = COLOR.texto) {
-    const t = titulo(this, ANCHO / 2, ALTO / 2 - 60, mensaje, 28, color).setScale(0).setDepth(10)
+  private banner(mensaje: string, color = COLOR.texto, tam = 28) {
+    const t = titulo(this, ANCHO / 2, ALTO / 2 - 60, mensaje, tam, color).setScale(0).setDepth(10)
     this.tweens.chain({
       targets: t,
       tweens: [

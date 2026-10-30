@@ -1,4 +1,5 @@
 import Phaser from 'phaser'
+import { CAPITULOS, CAPITULO_JEFE } from '../logica/historia'
 import { MEJORAS, NIVELES, VIDAS_MAX, comprar, costoMejora, type TipoMejora } from '../logica/partida'
 import { sonar } from '../sonido'
 import { ALTO, ANCHO, COLOR, boton, fondoEstrellas, texto, titulo } from '../ui'
@@ -43,9 +44,15 @@ export class Hangar extends Phaser.Scene {
     this.refrescar()
 
     boton(this, 728, ultimo ? '¡AL JEFE!' : 'CONTINUAR', () => {
-      juego.continuarTrasHangar()
-      this.scene.resume('Juego')
-      this.scene.stop()
+      // Juego sigue pausado detrás; se reanuda al acabar la escena de historia
+      this.scene.start('Historia', {
+        capitulo: ultimo ? CAPITULO_JEFE : CAPITULOS[p.nivel],
+        alTerminar: (historia: Phaser.Scene) => {
+          juego.continuarTrasHangar()
+          historia.scene.resume('Juego')
+          historia.scene.stop()
+        },
+      })
     }, ultimo ? COLOR.rojo : COLOR.verde)
   }
 

@@ -108,6 +108,8 @@ const SPRITES: Record<string, string[]> = {
     '.ggdddddddddgg.',
     '...oo.....oo...',
   ],
+  // retrato de la comandante Vega en los diálogos
+  vega: ['.ooooo.', 'ooyyyoo', 'oykykyo', 'oyyyyyo', '.yyryy.', '..yyy..', '.aaaaa.', 'aaybyaa', 'aaaaaaa'],
   // piloto de la intro: dos cuadros para animar la carrera
   piloto1: ['.bbbb.', '.bccb.', '.bbbb.', 'oooooo', 'o.oo.o', '..oo..', '.o..o.', 'o....o', 'k....k'],
   piloto2: ['.bbbb.', '.bccb.', '.bbbb.', 'oooooo', 'o.oo.o', '..oo..', '..oo..', '..oo..', '..kk..'],
