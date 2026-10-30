@@ -1,6 +1,6 @@
 # Escuadrón Estelar
 
-Shooter espacial para Android: pilotas un caza que dispara solo, derribas escuadrones enemigos durante 3 niveles y al final enfrentas al jefe. Tienes 3 vidas (hasta 5 con power-ups; depende de la dificultad).
+Shooter espacial para Android: pilotas un caza que dispara solo, derribas escuadrones enemigos durante 6 niveles con historia y al final enfrentas a la Reina del Enjambre. Tienes 3 vidas (hasta 5 con power-ups; depende de la dificultad). Al terminar un nivel, si te quedan menos de 3 vuelves a 3.
 
 - **Enemigos que atacan:**
 
@@ -28,6 +28,7 @@ Shooter espacial para Android: pilotas un caza que dispara solo, derribas escuad
 
   Se ajusta en `MEJORAS` de `src/logica/partida.ts`.
 - **Jefe final:** barra de vida, ráfagas en abanico, disparos apuntados y modo furia a mitad de vida.
+- **Historia:** seis capítulos con diálogos por radio entre niveles, escena antes del jefe y epílogo (`src/logica/historia.ts`).
 - **Sobrecarga:** rozar balas enemigas sin que te toquen y derribar enemigos llena una barra. Con la barra llena, pulsa ACTIVAR (o espacio): 6 s de disparo en abanico, el doble de rápido y con +2 de daño.
 - **Eventos sorpresa:** a mitad de cada nivel sale uno: lluvia de meteoritos, carguero con monedas que huye o mini-jefe (desde el nivel 2).
 - **Power-ups:** disparo triple (10 s), escudo (absorbe un golpe) y vida extra.
@@ -38,7 +39,7 @@ Shooter espacial para Android: pilotas un caza que dispara solo, derribas escuad
   |---|---|---|---|
   | Velocidad enemigos | ×0.8 | ×1 | ×1.25 |
   | Tiempo entre enemigos | ×1.3 | ×1 | ×0.75 |
-  | Vida del jefe | 132 | 220 | 330 |
+  | Vida del jefe | 192 | 320 | 480 |
   | Vidas iniciales | 5 | 3 | 2 |
   | Prob. power-up | 15% | 10% | 7% |
   | Puntos | ×0.5 | ×1 | ×1.5 |
@@ -55,8 +56,9 @@ Entrega #4 - Final (Juego) · Aplicaciones Móviles · UPB.
 | Splash | Logo animado y barra de carga (toca para saltar) |
 | Home | Jugar, Puntajes, Créditos, nombre del piloto y sonido on/off |
 | Intro | Cinemática del piloto subiendo a la nave y despegando (toca para saltar) |
-| Juego | 3 niveles por tiempo + jefe final, vidas, combos, power-ups y monedas (con capa de Pausa) |
+| Juego | 6 niveles por tiempo + jefe final, vidas, combos, power-ups y monedas (con capa de Pausa) |
 | Hangar | Tienda de mejoras entre niveles |
+| Historia | Diálogos del capítulo entre niveles y epílogo |
 | Puntajes | Resultado, derribos y top 5 guardado |
 | Créditos | Equipo, tecnologías y uso de IA |
 
@@ -91,7 +93,7 @@ npx cap open android   # abrir en Android Studio
 ```
 src/
   logica/      partida.ts (niveles, vidas, combos, power-ups, monedas, mejoras, sobrecarga, eventos, jefe), puntaje.ts (top 5)
-  escenas/     Splash, Home, Intro, Juego, Pausa, Hangar, Puntajes, Creditos
+  escenas/     Splash, Home, Intro, Juego, Pausa, Hangar, Historia, Puntajes, Creditos
   almacen.ts   persistencia
   sonido.ts    efectos y música con Web Audio
   texturas.ts  sprites pixel art
