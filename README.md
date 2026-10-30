@@ -28,6 +28,8 @@ Shooter espacial para Android: pilotas un caza que dispara solo, derribas escuad
 
   Se ajusta en `MEJORAS` de `src/logica/partida.ts`.
 - **Jefe final:** barra de vida, ráfagas en abanico, disparos apuntados y modo furia a mitad de vida.
+- **Sobrecarga:** rozar balas enemigas sin que te toquen y derribar enemigos llena una barra. Con la barra llena, pulsa ACTIVAR (o espacio): 6 s de disparo en abanico, el doble de rápido y con +2 de daño.
+- **Eventos sorpresa:** a mitad de cada nivel sale uno: lluvia de meteoritos, carguero con monedas que huye o mini-jefe (desde el nivel 2).
 - **Power-ups:** disparo triple (10 s), escudo (absorbe un golpe) y vida extra.
 - **Combos:** derribos seguidos suben el multiplicador hasta x5; un golpe o 2.5 s sin derribar lo reinician.
 - **Dificultad** (se elige en el menú y se guarda):
@@ -52,6 +54,7 @@ Entrega #4 - Final (Juego) · Aplicaciones Móviles · UPB.
 |---|---|
 | Splash | Logo animado y barra de carga (toca para saltar) |
 | Home | Jugar, Puntajes, Créditos, nombre del piloto y sonido on/off |
+| Intro | Cinemática del piloto subiendo a la nave y despegando (toca para saltar) |
 | Juego | 3 niveles por tiempo + jefe final, vidas, combos, power-ups y monedas (con capa de Pausa) |
 | Hangar | Tienda de mejoras entre niveles |
 | Puntajes | Resultado, derribos y top 5 guardado |
@@ -87,8 +90,8 @@ npx cap open android   # abrir en Android Studio
 
 ```
 src/
-  logica/      partida.ts (niveles, vidas, combos, power-ups, monedas, mejoras, jefe), puntaje.ts (top 5)
-  escenas/     Splash, Home, Juego, Pausa, Hangar, Puntajes, Creditos
+  logica/      partida.ts (niveles, vidas, combos, power-ups, monedas, mejoras, sobrecarga, eventos, jefe), puntaje.ts (top 5)
+  escenas/     Splash, Home, Intro, Juego, Pausa, Hangar, Puntajes, Creditos
   almacen.ts   persistencia
   sonido.ts    efectos y música con Web Audio
   texturas.ts  sprites pixel art
