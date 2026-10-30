@@ -66,6 +66,10 @@ Entrega #4 - Final (Juego) · Aplicaciones Móviles · UPB.
 **Persistencia:** top 5, nombre del piloto, sonido y modo secreto se guardan en `localStorage` (funciona igual en la app Android).
 **Easter egg:** toca 5 veces el título en el menú. 🐱
 
+## Diseño
+
+Wireframes en escala de grises de las 10 pantallas en [`docs/wireframes.svg`](docs/wireframes.svg). Para editarlos en Figma, arrastra el archivo a un lienzo.
+
 ## Stack
 
 - **Phaser 3** (escenas, física arcade, tweens, partículas) + **TypeScript** + **Vite**
