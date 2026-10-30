@@ -1,6 +1,7 @@
 import '@fontsource/press-start-2p'
 import '@fontsource/vt323'
 import './style.css'
+import { App } from '@capacitor/app'
 import Phaser from 'phaser'
 import { Creditos } from './escenas/Creditos'
 import { Home } from './escenas/Home'
@@ -27,6 +28,12 @@ Promise.all([document.fonts.load('16px "Press Start 2P"'), document.fonts.load('
     physics: { default: 'arcade' },
     input: { activePointers: 2 }, // arrastrar la nave y pulsar ACTIVAR a la vez
     scene: [Splash, Home, Intro, Juego, Pausa, Hangar, Historia, Puntajes, Creditos, Final],
+  })
+  // Botón atrás de Android: sin esto cerraría la app en plena partida.
+  void App.addListener('backButton', () => {
+    const activa = juego.scene.getScenes(true)[0]
+    if (activa?.scene.key === 'Juego') (activa as Juego).pausar()
+    if (activa?.scene.key === 'Home') void App.exitApp()
   })
   // Solo en desarrollo: acceso desde la consola para depurar
   if (import.meta.env.DEV) Object.assign(window, { juego })

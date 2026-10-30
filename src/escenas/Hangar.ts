@@ -60,6 +60,7 @@ export class Hangar extends Phaser.Scene {
 
   // Las cuatro mejoras completas explotan y dejan paso a la nave nueva.
   private evolucionar() {
+    this.registry.set('nave', 'fenix') // la historia que sigue ya debe mostrarla
     sonar('evolucion')
     this.input.enabled = false
     this.cameras.main.shake(900, 0.012)

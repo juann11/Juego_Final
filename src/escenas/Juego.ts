@@ -250,10 +250,7 @@ export class Juego extends Phaser.Scene {
 
   // Cadencia y alas dependen de las mejoras compradas en el Hangar.
   private aplicarMejoras() {
-    if (this.partida.evolucionada && this.nave.texture.key !== 'fenix') {
-      this.nave.setTexture('fenix')
-      this.registry.set('nave', 'fenix')
-    }
+    if (this.partida.evolucionada) this.nave.setTexture('fenix')
     this.disparo?.remove()
     this.disparo = this.time.addEvent({ delay: cadenciaMs(this.partida), loop: true, callback: () => this.disparar() })
     while (this.alasNaves.length < alas(this.partida)) {
@@ -698,7 +695,7 @@ export class Juego extends Phaser.Scene {
     })
   }
 
-  private pausar() {
+  pausar() {
     if (this.partida.terminada || !this.scene.isActive()) return
     detenerMusica()
     this.scene.launch('Pausa')

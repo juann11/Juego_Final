@@ -1,5 +1,6 @@
 import Phaser from 'phaser'
-import { ALTO, ANCHO, COLOR, boton, titulo } from '../ui'
+import { alternarSonido, sonar, sonidoActivo } from '../sonido'
+import { ALTO, ANCHO, COLOR, boton, texto, titulo } from '../ui'
 
 // Se lanza encima de Juego (que queda pausado) como capa semitransparente.
 export class Pausa extends Phaser.Scene {
@@ -18,5 +19,14 @@ export class Pausa extends Phaser.Scene {
       this.scene.stop('Juego')
       this.scene.start('Home')
     }, COLOR.azul)
+
+    const sonido = texto(this, ANCHO / 2, 590, '', 30, COLOR.textoSuave).setPadding(14)
+    const pintar = () => sonido.setText(`Sonido: ${sonidoActivo() ? 'SÍ' : 'NO'}`)
+    pintar()
+    sonido.setInteractive({ useHandCursor: true }).on('pointerup', () => {
+      alternarSonido()
+      sonar('clic')
+      pintar()
+    })
   }
 }
