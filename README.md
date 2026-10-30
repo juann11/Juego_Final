@@ -26,9 +26,9 @@ Shooter espacial para Android: pilotas un caza que dispara solo, derribas escuad
   | Reparar | +1 vida (recomprable) | 30 |
   | Escudo | Bloquea un golpe (recomprable) | 20 |
 
-  Se ajusta en `MEJORAS` de `src/logica/partida.ts`.
-- **Jefe final:** barra de vida, ráfagas en abanico, disparos apuntados y modo furia a mitad de vida.
-- **Historia:** seis capítulos con diálogos por radio entre niveles, escena antes del jefe y epílogo (`src/logica/historia.ts`).
+  Se ajusta en `MEJORAS` de `src/logica/partida.ts`. Al completar Potencia, Cadencia, Alas e Imán las mejoras explotan y la nave evoluciona al **Fénix**: disparo triple siempre, más daño y más cadencia.
+- **La Reina (jefe final):** ráfagas en abanico, disparos apuntados y modo furia a mitad de vida. Al bajar a 2/3 y 1/3 de vida se retira, queda intocable y manda oleadas de enemigos; vuelve cuando se limpian.
+- **Historia:** seis capítulos con diálogos por radio y un escenario animado distinto en cada uno (`src/escenas/paisajes.ts`), escena antes del jefe y epílogo. Al ganar: créditos y cinemática final del piloto volviendo a casa.
 - **Sobrecarga:** rozar balas enemigas sin que te toquen y derribar enemigos llena una barra. Con la barra llena, pulsa ACTIVAR (o espacio): 6 s de disparo en abanico, el doble de rápido y con +2 de daño.
 - **Eventos sorpresa:** a mitad de cada nivel sale uno: lluvia de meteoritos, carguero con monedas que huye o mini-jefe (desde el nivel 2).
 - **Power-ups:** disparo triple (10 s), escudo (absorbe un golpe) y vida extra.
@@ -58,7 +58,8 @@ Entrega #4 - Final (Juego) · Aplicaciones Móviles · UPB.
 | Intro | Cinemática del piloto subiendo a la nave y despegando (toca para saltar) |
 | Juego | 6 niveles por tiempo + jefe final, vidas, combos, power-ups y monedas (con capa de Pausa) |
 | Hangar | Tienda de mejoras entre niveles |
-| Historia | Diálogos del capítulo entre niveles y epílogo |
+| Historia | Diálogos y paisaje del capítulo entre niveles, y epílogo |
+| Final | Cinemática después de los créditos al ganar |
 | Puntajes | Resultado, derribos y top 5 guardado |
 | Créditos | Equipo, tecnologías y uso de IA |
 
@@ -93,7 +94,7 @@ npx cap open android   # abrir en Android Studio
 ```
 src/
   logica/      partida.ts (niveles, vidas, combos, power-ups, monedas, mejoras, sobrecarga, eventos, jefe), puntaje.ts (top 5)
-  escenas/     Splash, Home, Intro, Juego, Pausa, Hangar, Historia, Puntajes, Creditos
+  escenas/     Splash, Home, Intro, Juego, Pausa, Hangar, Historia, Puntajes, Creditos, Final
   almacen.ts   persistencia
   sonido.ts    efectos y música con Web Audio
   texturas.ts  sprites pixel art
