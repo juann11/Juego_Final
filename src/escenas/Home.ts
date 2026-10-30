@@ -74,7 +74,7 @@ export class Home extends Phaser.Scene {
       this.tweens.add({ targets: dificultad, scale: { from: 1.15, to: 1 }, duration: 150 })
     })
 
-    boton(this, 572, 'JUGAR', () => irA(this, 'Juego'))
+    boton(this, 572, 'JUGAR', () => irA(this, 'Intro'))
     boton(this, 647, 'PUNTAJES', () => irA(this, 'Puntajes'), COLOR.azul)
     boton(this, 722, 'CRÉDITOS', () => irA(this, 'Creditos'), COLOR.azul)
 

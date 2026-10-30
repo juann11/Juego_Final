@@ -99,6 +99,17 @@ const SPRITES: Record<string, string[]> = {
     '.mmpppmm.',
     '...mmm...',
   ],
+  carguero: [
+    '...gggggggggg..',
+    '.ggyyyyyyyyyyg.',
+    'gggyokyokyokygc',
+    'gggyyyyyyyyyygc',
+    '.ggdddddddddgg.',
+    '...oo.....oo...',
+  ],
+  // piloto de la intro: dos cuadros para animar la carrera
+  piloto1: ['.bbbb.', '.bccb.', '.bbbb.', 'oooooo', 'o.oo.o', '..oo..', '.o..o.', 'o....o', 'k....k'],
+  piloto2: ['.bbbb.', '.bccb.', '.bbbb.', 'oooooo', 'o.oo.o', '..oo..', '..oo..', '..oo..', '..kk..'],
   // nave de apoyo (mejora ALAS)
   ala: ['...b...', '..bcb..', '.baaab.', 'baaaaab', 'b.aaa.b', '..o.o..'],
   moneda: ['.yyy.', 'yyoyy', 'yoyoy', 'yyoyy', '.yyy.'],
