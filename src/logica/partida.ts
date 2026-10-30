@@ -97,6 +97,8 @@ export const NIVELES: Nivel[] = [
   },
 ]
 
+export const MEJORAS_NAVE: TipoMejora[] = ['potencia', 'cadencia', 'alas', 'iman'] // completarlas evoluciona la nave
+export const FASES_JEFE = [2 / 3, 1 / 3] // al cruzar estas fracciones de vida la Reina se retira
 export const VIDAS_MAX = 5
 export const VIDAS_MIN_NIVEL = 3 // al terminar un nivel se recupera hasta aquí
 export const COMBO_VENTANA_S = 2.5
@@ -118,6 +120,7 @@ export interface Partida {
   jefe: boolean // true cuando acabó el último nivel y toca pelear contra el jefe
   tienda: boolean // true entre niveles, mientras el hangar está abierto
   eventoHecho: boolean // el evento sorpresa de este nivel ya salió
+  evolucionada: boolean // completó las mejoras: pilota el Fénix
   carga: number // barra de sobrecarga
   sobrecargaS: number // segundos restantes de sobrecarga activa
   monedas: number
@@ -141,6 +144,7 @@ export function nuevaPartida(dificultad: Dificultad = 'normal'): Partida {
     jefe: false,
     tienda: false,
     eventoHecho: false,
+    evolucionada: false,
     carga: 0,
     sobrecargaS: 0,
     monedas: 0,
@@ -239,6 +243,11 @@ export function avanzarTiempo(p: Partida, segundos: number): Partida {
   return { ...base, tiempoRestante: 0, tienda: true, vidas: Math.max(p.vidas, VIDAS_MIN_NIVEL) }
 }
 
+export function cruzaFaseJefe(vidaAntes: number, vidaDespues: number, vidaMax: number): boolean {
+  if (vidaDespues <= 0) return false
+  return FASES_JEFE.some((f) => vidaAntes > vidaMax * f && vidaDespues <= vidaMax * f)
+}
+
 export function salirDeTienda(p: Partida): Partida {
   if (!p.tienda) return p
   if (p.nivel >= NIVELES.length) return { ...p, tienda: false, jefe: true }
@@ -257,17 +266,23 @@ export function costoMejora(p: Partida, tipo: TipoMejora): number | null {
   return costos[p.mejoras[tipo]] ?? null
 }
 
+export function evolucionCompleta(p: Partida): boolean {
+  return MEJORAS_NAVE.every((t) => p.mejoras[t] >= MEJORAS[t].costos.length)
+}
+
 export function comprar(p: Partida, tipo: TipoMejora): Partida {
   const costo = costoMejora(p, tipo)
   if (costo === null || p.monedas < costo) return p
-  const q = { ...p, monedas: p.monedas - costo, mejoras: { ...p.mejoras, [tipo]: p.mejoras[tipo] + 1 } }
+  const mejoras = { ...p.mejoras, [tipo]: p.mejoras[tipo] + 1 }
+  const q = { ...p, monedas: p.monedas - costo, mejoras, evolucionada: evolucionCompleta({ ...p, mejoras }) }
   if (tipo === 'vida') return { ...q, vidas: q.vidas + 1 }
   if (tipo === 'escudo') return { ...q, escudo: true }
   return q
 }
 
-export const danioBala = (p: Partida) => 1 + p.mejoras.potencia + (p.sobrecargaS > 0 ? 2 : 0)
-export const cadenciaMs = (p: Partida) => Math.round((CADENCIA_BASE_MS * 0.8 ** p.mejoras.cadencia) / (p.sobrecargaS > 0 ? 2 : 1))
+export const danioBala = (p: Partida) => 1 + p.mejoras.potencia + (p.sobrecargaS > 0 ? 2 : 0) + (p.evolucionada ? 2 : 0)
+export const cadenciaMs = (p: Partida) =>
+  Math.round((CADENCIA_BASE_MS * 0.8 ** p.mejoras.cadencia * (p.evolucionada ? 0.85 : 1)) / (p.sobrecargaS > 0 ? 2 : 1))
 export const radioIman = (p: Partida) => 90 + 80 * p.mejoras.iman
 export const alas = (p: Partida) => p.mejoras.alas
 

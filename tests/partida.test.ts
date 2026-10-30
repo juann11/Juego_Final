@@ -24,6 +24,8 @@ import {
   radioIman,
   recogerMonedas,
   salirDeTienda,
+  cruzaFaseJefe,
+  evolucionCompleta,
   VIDAS_MIN_NIVEL,
   CARGA_MAX,
   CARGA_POR_DERRIBO,
@@ -388,5 +390,58 @@ describe('vidas al terminar un nivel', () => {
 describe('progresión', () => {
   it('hay 6 niveles', () => {
     expect(NIVELES).toHaveLength(6)
+  })
+})
+
+describe('evolución de la nave', () => {
+  const casiCompleta = () => {
+    let p = { ...nuevaPartida(), monedas: 10000 }
+    for (const t of ['potencia', 'cadencia', 'alas', 'iman'] as const) {
+      for (let i = 0; i < MEJORAS[t].costos.length; i++) p = comprar(p, t)
+    }
+    return p
+  }
+
+  it('al completar las cuatro mejoras la nave evoluciona', () => {
+    expect(casiCompleta().evolucionada).toBe(true)
+    expect(evolucionCompleta(casiCompleta())).toBe(true)
+  })
+
+  it('con una mejora sin completar no evoluciona', () => {
+    let p = { ...nuevaPartida(), monedas: 10000 }
+    for (const t of ['potencia', 'cadencia', 'alas'] as const) {
+      for (let i = 0; i < MEJORAS[t].costos.length; i++) p = comprar(p, t)
+    }
+    expect(p.evolucionada).toBe(false)
+  })
+
+  it('reparar y escudo no cuentan para evolucionar', () => {
+    let p = comprar(comprar({ ...nuevaPartida(), monedas: 1000 }, 'vida'), 'escudo')
+    expect(p.evolucionada).toBe(false)
+    p = comprar({ ...casiCompleta(), vidas: 1 }, 'vida')
+    expect(p.evolucionada).toBe(true)
+  })
+
+  it('la nave evolucionada es mejor que la nave con todo al máximo', () => {
+    const p = casiCompleta()
+    const sinEvolucion = { ...p, evolucionada: false }
+    expect(danioBala(p)).toBeGreaterThan(danioBala(sinEvolucion))
+    expect(cadenciaMs(p)).toBeLessThan(cadenciaMs(sinEvolucion))
+  })
+})
+
+describe('fases de la Reina', () => {
+  it('se retira al cruzar 2/3 y 1/3 de su vida', () => {
+    expect(cruzaFaseJefe(220, 212, 320)).toBe(true)
+    expect(cruzaFaseJefe(110, 104, 320)).toBe(true)
+  })
+
+  it('no se retira entre fases', () => {
+    expect(cruzaFaseJefe(320, 318, 320)).toBe(false)
+    expect(cruzaFaseJefe(200, 198, 320)).toBe(false)
+  })
+
+  it('no se retira con el golpe que la mata', () => {
+    expect(cruzaFaseJefe(110, 0, 320)).toBe(false)
   })
 })
