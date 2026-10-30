@@ -45,7 +45,7 @@ Shooter espacial para Android: pilotas un caza que dispara solo, derribas escuad
   | Puntos | ×0.5 | ×1 | ×1.5 |
 
   Se ajusta en `DIFICULTADES` de `src/logica/partida.ts`.
-- **Pausa** con botón o al salir de la app; música chiptune y vibración al recibir golpes.
+- **Pausa** con botón, con el botón atrás de Android o al salir de la app (incluye sonido sí/no); música chiptune y vibración al recibir golpes.
 
 Entrega #4 - Final (Juego) · Aplicaciones Móviles · UPB.
 
@@ -87,7 +87,7 @@ npx cap open android   # abrir en Android Studio
 
 1. `npm run android` y `npx cap open android`.
 2. En Android Studio: *Build → Generate Signed App Bundle / APK → Android App Bundle*, crea un keystore (guárdalo fuera del repo) y genera el `.aab`.
-3. Sube el `.aab` en Play Console. Sube `versionCode` en `android/app/build.gradle` en cada nueva versión.
+3. Sube el `.aab` en Play Console (el ícono de 512 px está en `assets/icono-play-512.png`). Sube `versionCode` en `android/app/build.gradle` en cada nueva versión.
 
 ## Estructura
 
