@@ -24,6 +24,7 @@ import {
   radioIman,
   recogerMonedas,
   salirDeTienda,
+  invencible,
   cruzaFaseJefe,
   evolucionCompleta,
   VIDAS_MIN_NIVEL,
@@ -443,5 +444,20 @@ describe('fases de la Reina', () => {
 
   it('no se retira con el golpe que la mata', () => {
     expect(cruzaFaseJefe(110, 0, 320)).toBe(false)
+  })
+})
+
+describe('invencibilidad en sobrecarga', () => {
+  const activa = () => activarSobrecarga({ ...nuevaPartida(), carga: CARGA_MAX, combo: 7, comboTiempo: 2 })
+
+  it('durante la sobrecarga es invencible y después ya no', () => {
+    expect(invencible(activa())).toBe(true)
+    expect(invencible(avanzarTiempo(activa(), SOBRECARGA_S + 1))).toBe(false)
+    expect(invencible(nuevaPartida())).toBe(false)
+  })
+
+  it('un golpe no quita vida, ni gasta escudo, ni rompe el combo', () => {
+    const p = { ...activa(), escudo: true }
+    expect(recibirGolpe(p)).toEqual(p)
   })
 })

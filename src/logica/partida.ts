@@ -196,8 +196,12 @@ export function elegirEvento(nivel: Nivel, azar: number): TipoEvento {
   return nivel.eventos[Math.floor(azar * nivel.eventos.length)]
 }
 
+export function invencible(p: Partida): boolean {
+  return p.sobrecargaS > 0
+}
+
 export function recibirGolpe(p: Partida): Partida {
-  if (p.terminada) return p
+  if (p.terminada || invencible(p)) return p
   if (p.escudo) return { ...p, escudo: false, combo: 0 }
   const vidas = Math.max(0, p.vidas - 1)
   return { ...p, vidas, combo: 0, terminada: vidas === 0 }

@@ -29,7 +29,7 @@ Shooter espacial para Android: pilotas un caza que dispara solo, derribas escuad
   Se ajusta en `MEJORAS` de `src/logica/partida.ts`. Al completar Potencia, Cadencia, Alas e Imán las mejoras explotan y la nave evoluciona al **Fénix**: disparo triple siempre, más daño y más cadencia.
 - **La Reina (jefe final):** ráfagas en abanico, disparos apuntados y modo furia a mitad de vida. Al bajar a 2/3 y 1/3 de vida se retira, queda intocable y manda oleadas de enemigos; vuelve cuando se limpian.
 - **Historia:** seis capítulos con diálogos por radio y un escenario animado distinto en cada uno (`src/escenas/paisajes.ts`), escena antes del jefe y epílogo. Al ganar: créditos y cinemática final del piloto volviendo a casa.
-- **Sobrecarga:** rozar balas enemigas sin que te toquen y derribar enemigos llena una barra. Con la barra llena, pulsa ACTIVAR (o espacio): 6 s de disparo en abanico, el doble de rápido y con +2 de daño.
+- **Sobrecarga:** rozar balas enemigas sin que te toquen y derribar enemigos llena una barra. Con la barra llena, pulsa ACTIVAR (o espacio): 6 s de invencibilidad con disparo en abanico, el doble de rápido y con +2 de daño.
 - **Eventos sorpresa:** a mitad de cada nivel sale uno: lluvia de meteoritos, carguero con monedas que huye o mini-jefe (desde el nivel 2).
 - **Power-ups:** disparo triple (10 s), escudo (absorbe un golpe) y vida extra.
 - **Combos:** derribos seguidos suben el multiplicador hasta x5; un golpe o 2.5 s sin derribar lo reinician.

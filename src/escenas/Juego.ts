@@ -19,6 +19,7 @@ import {
   elegirEnemigo,
   elegirEvento,
   intervaloDisparo,
+  invencible,
   marcarEvento,
   multiplicador,
   nuevaPartida,
@@ -176,7 +177,7 @@ export class Juego extends Phaser.Scene {
     if (this.teclas?.right.isDown) this.moverNave(vel, 0)
     if (this.teclas?.up.isDown) this.moverNave(0, -vel)
     if (this.teclas?.down.isDown) this.moverNave(0, vel)
-    this.escudoVisual.setPosition(this.nave.x, this.nave.y).setVisible(this.partida.escudo)
+    this.escudoVisual.setPosition(this.nave.x, this.nave.y).setVisible(this.partida.escudo || invencible(this.partida))
     // las alas siguen a la nave con un poco de retraso
     this.alasNaves.forEach((a, i) => {
       a.x = Phaser.Math.Linear(a.x, this.nave.x + (i % 2 ? 55 : -55), 0.2)
@@ -229,7 +230,7 @@ export class Juego extends Phaser.Scene {
 
   // Una bala rozó si estuvo muy cerca y siguió de largo sin chocar (si choca, se destruye antes).
   private detectarRoces() {
-    if (this.invulnerable) return
+    if (this.invulnerable || invencible(this.partida)) return // sin riesgo no hay roce
     for (const b of this.balasEnemigas.getChildren() as Sprite[]) {
       const cerca = Phaser.Math.Distance.Between(b.x, b.y, this.nave.x, this.nave.y) < RADIO_ROCE
       const estado = b.getData('roce')
@@ -323,7 +324,7 @@ export class Juego extends Phaser.Scene {
   }
 
   private chocar(objeto: Sprite, destruirObjeto = true) {
-    if (this.invulnerable || this.partida.terminada) return
+    if (this.invulnerable || this.partida.terminada || invencible(this.partida)) return
     this.explosion(objeto.x, objeto.y, 12)
     if (destruirObjeto) objeto.destroy()
     const teniaEscudo = this.partida.escudo
