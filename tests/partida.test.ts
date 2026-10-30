@@ -24,6 +24,7 @@ import {
   radioIman,
   recogerMonedas,
   salirDeTienda,
+  VIDAS_MIN_NIVEL,
   CARGA_MAX,
   CARGA_POR_DERRIBO,
   CARGA_POR_ROCE,
@@ -365,5 +366,27 @@ describe('eventos sorpresa', () => {
   it('elegirEvento toma uno de los eventos del nivel', () => {
     expect(elegirEvento(NIVELES[1], 0)).toBe(NIVELES[1].eventos[0])
     expect(elegirEvento(NIVELES[1], 0.999)).toBe(NIVELES[1].eventos.at(-1))
+  })
+})
+
+describe('vidas al terminar un nivel', () => {
+  const finDeNivel = (vidas: number) => avanzarTiempo({ ...nuevaPartida(), vidas, tiempoRestante: 0.1 }, 1)
+
+  it('si tiene menos del mínimo vuelve al mínimo', () => {
+    expect(finDeNivel(1).vidas).toBe(VIDAS_MIN_NIVEL)
+  })
+
+  it('si tiene más del mínimo se quedan igual', () => {
+    expect(finDeNivel(5).vidas).toBe(5)
+  })
+
+  it('también aplica en difícil, que empieza con menos vidas', () => {
+    expect(avanzarTiempo({ ...nuevaPartida('dificil'), tiempoRestante: 0.1 }, 1).vidas).toBe(VIDAS_MIN_NIVEL)
+  })
+})
+
+describe('progresión', () => {
+  it('hay 6 niveles', () => {
+    expect(NIVELES).toHaveLength(6)
   })
 })

@@ -30,7 +30,7 @@ export const MEJORAS: Record<TipoMejora, { nombre: string; descripcion: string; 
   escudo: { nombre: 'ESCUDO', descripcion: 'Bloquea un golpe', costos: [20] },
 }
 
-export const JEFE = { vida: 220, puntos: 2000 }
+export const JEFE = { vida: 320, puntos: 2000 }
 
 export type Dificultad = 'facil' | 'normal' | 'dificil'
 
@@ -72,20 +72,33 @@ export interface Nivel {
 
 export const NIVELES: Nivel[] = [
   {
-    velocidad: 170, intervaloMs: 800, duracionS: 30, elite: 0.03, formacion: 0.06, eventos: ['lluvia', 'carguero'],
-    enemigos: { dron: 60, zigzag: 15, meteorito: 25 },
+    velocidad: 170, intervaloMs: 800, duracionS: 30, elite: 0.03, formacion: 0.05, eventos: ['lluvia', 'carguero'],
+    enemigos: { dron: 70, meteorito: 30 },
   },
   {
-    velocidad: 210, intervaloMs: 650, duracionS: 35, elite: 0.08, formacion: 0.1, eventos: ['lluvia', 'carguero', 'miniJefe'],
-    enemigos: { dron: 30, zigzag: 25, kamikaze: 15, meteorito: 15, acorazado: 6, tirador: 9 },
+    velocidad: 190, intervaloMs: 720, duracionS: 30, elite: 0.05, formacion: 0.07, eventos: ['lluvia', 'carguero', 'miniJefe'],
+    enemigos: { dron: 45, zigzag: 30, meteorito: 25 },
   },
   {
-    velocidad: 250, intervaloMs: 540, duracionS: 40, elite: 0.14, formacion: 0.14, eventos: ['lluvia', 'carguero', 'miniJefe'],
-    enemigos: { dron: 20, zigzag: 20, kamikaze: 15, tirador: 18, meteorito: 8, acorazado: 9, orbe: 10 },
+    velocidad: 210, intervaloMs: 650, duracionS: 35, elite: 0.08, formacion: 0.09, eventos: ['lluvia', 'carguero', 'miniJefe'],
+    enemigos: { dron: 35, zigzag: 30, kamikaze: 20, meteorito: 15 },
+  },
+  {
+    velocidad: 230, intervaloMs: 590, duracionS: 35, elite: 0.1, formacion: 0.11, eventos: ['lluvia', 'carguero', 'miniJefe'],
+    enemigos: { dron: 30, zigzag: 25, kamikaze: 15, tirador: 20, meteorito: 10 },
+  },
+  {
+    velocidad: 250, intervaloMs: 540, duracionS: 40, elite: 0.12, formacion: 0.13, eventos: ['lluvia', 'carguero', 'miniJefe'],
+    enemigos: { dron: 25, zigzag: 20, kamikaze: 15, tirador: 20, acorazado: 10, meteorito: 10 },
+  },
+  {
+    velocidad: 270, intervaloMs: 500, duracionS: 40, elite: 0.14, formacion: 0.15, eventos: ['lluvia', 'carguero', 'miniJefe'],
+    enemigos: { dron: 20, zigzag: 20, kamikaze: 15, tirador: 18, acorazado: 9, orbe: 10, meteorito: 8 },
   },
 ]
 
 export const VIDAS_MAX = 5
+export const VIDAS_MIN_NIVEL = 3 // al terminar un nivel se recupera hasta aquí
 export const COMBO_VENTANA_S = 2.5
 export const MULTIPLICADOR_MAX = 5
 export const TRIPLE_S = 10
@@ -223,7 +236,7 @@ export function avanzarTiempo(p: Partida, segundos: number): Partida {
   if (p.jefe || p.tienda) return base
   const tiempoRestante = p.tiempoRestante - segundos
   if (tiempoRestante > 0) return { ...base, tiempoRestante }
-  return { ...base, tiempoRestante: 0, tienda: true }
+  return { ...base, tiempoRestante: 0, tienda: true, vidas: Math.max(p.vidas, VIDAS_MIN_NIVEL) }
 }
 
 export function salirDeTienda(p: Partida): Partida {
