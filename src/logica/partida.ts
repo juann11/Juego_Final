@@ -1,6 +1,7 @@
 // Lógica pura de la partida: sin Phaser, para poder probarla con Vitest.
 
-export type TipoEnemigo = 'dron' | 'zigzag' | 'tirador' | 'meteorito' | 'kamikaze' | 'acorazado' | 'orbe'
+export type TipoEnemigo = 'dron' | 'zigzag' | 'tirador' | 'meteorito' | 'kamikaze' | 'acorazado' | 'orbe' | 'carguero'
+export type TipoEvento = 'lluvia' | 'carguero' | 'miniJefe'
 export type TipoPowerUp = 'triple' | 'escudo' | 'vida'
 export type TipoMejora = 'potencia' | 'cadencia' | 'alas' | 'iman' | 'vida' | 'escudo'
 
@@ -13,6 +14,7 @@ export const ENEMIGOS: Record<TipoEnemigo, { vida: number; puntos: number; moned
   tirador: { vida: 7, puntos: 45, monedas: 3, disparoMs: 1600 },
   orbe: { vida: 9, puntos: 60, monedas: 4, disparoMs: 2000 },
   acorazado: { vida: 14, puntos: 90, monedas: 6, disparoMs: 2200 },
+  carguero: { vida: 12, puntos: 100, monedas: 12 }, // solo aparece como evento: huye sin atacar
 }
 
 export const SUBIDA_VIDA_POR_NIVEL = 0.25 // +25% de vida enemiga por cada nivel
@@ -65,16 +67,20 @@ export interface Nivel {
   enemigos: Partial<Record<TipoEnemigo, number>> // pesos de aparición
   elite: number // probabilidad de que un enemigo salga élite (dorado, x2 vida)
   formacion: number // probabilidad de que en vez de un enemigo baje un escuadrón de 5 drones
+  eventos: TipoEvento[] // el evento sorpresa del nivel sale de esta lista
 }
 
 export const NIVELES: Nivel[] = [
-  { velocidad: 170, intervaloMs: 800, duracionS: 30, elite: 0.03, formacion: 0.06, enemigos: { dron: 60, zigzag: 15, meteorito: 25 } },
   {
-    velocidad: 210, intervaloMs: 650, duracionS: 35, elite: 0.08, formacion: 0.1,
+    velocidad: 170, intervaloMs: 800, duracionS: 30, elite: 0.03, formacion: 0.06, eventos: ['lluvia', 'carguero'],
+    enemigos: { dron: 60, zigzag: 15, meteorito: 25 },
+  },
+  {
+    velocidad: 210, intervaloMs: 650, duracionS: 35, elite: 0.08, formacion: 0.1, eventos: ['lluvia', 'carguero', 'miniJefe'],
     enemigos: { dron: 30, zigzag: 25, kamikaze: 15, meteorito: 15, acorazado: 6, tirador: 9 },
   },
   {
-    velocidad: 250, intervaloMs: 540, duracionS: 40, elite: 0.14, formacion: 0.14,
+    velocidad: 250, intervaloMs: 540, duracionS: 40, elite: 0.14, formacion: 0.14, eventos: ['lluvia', 'carguero', 'miniJefe'],
     enemigos: { dron: 20, zigzag: 20, kamikaze: 15, tirador: 18, meteorito: 8, acorazado: 9, orbe: 10 },
   },
 ]
@@ -84,6 +90,11 @@ export const COMBO_VENTANA_S = 2.5
 export const MULTIPLICADOR_MAX = 5
 export const TRIPLE_S = 10
 export const CADENCIA_BASE_MS = 170
+export const CARGA_MAX = 100
+export const CARGA_POR_DERRIBO = 3
+export const CARGA_POR_ROCE = 8
+export const SOBRECARGA_S = 6
+export const PUNTOS_ROCE = 5
 
 export interface Partida {
   dificultad: Dificultad
@@ -93,6 +104,9 @@ export interface Partida {
   tiempoRestante: number
   jefe: boolean // true cuando acabó el último nivel y toca pelear contra el jefe
   tienda: boolean // true entre niveles, mientras el hangar está abierto
+  eventoHecho: boolean // el evento sorpresa de este nivel ya salió
+  carga: number // barra de sobrecarga
+  sobrecargaS: number // segundos restantes de sobrecarga activa
   monedas: number
   mejoras: Record<TipoMejora, number> // veces compradas
   combo: number // derribos seguidos sin dejar pasar la ventana ni recibir golpes
@@ -113,6 +127,9 @@ export function nuevaPartida(dificultad: Dificultad = 'normal'): Partida {
     tiempoRestante: NIVELES[0].duracionS,
     jefe: false,
     tienda: false,
+    eventoHecho: false,
+    carga: 0,
+    sobrecargaS: 0,
     monedas: 0,
     mejoras: { potencia: 0, cadencia: 0, alas: 0, iman: 0, vida: 0, escudo: 0 },
     combo: 0,
@@ -133,6 +150,35 @@ function ganancia(p: Partida, base: number): number {
   return Math.round(base * multiplicador(p) * DIFICULTADES[p.dificultad].puntos)
 }
 
+// Durante la sobrecarga la barra no se llena: se gana solo al terminarla.
+function sumarCarga(p: Partida, cantidad: number): number {
+  return p.sobrecargaS > 0 ? p.carga : Math.min(CARGA_MAX, p.carga + cantidad)
+}
+
+export function rozar(p: Partida): Partida {
+  if (p.terminada) return p
+  return { ...p, carga: sumarCarga(p, CARGA_POR_ROCE), puntos: p.puntos + ganancia(p, PUNTOS_ROCE) }
+}
+
+export function activarSobrecarga(p: Partida): Partida {
+  if (p.terminada || p.carga < CARGA_MAX) return p
+  return { ...p, carga: 0, sobrecargaS: SOBRECARGA_S }
+}
+
+export function pideEvento(p: Partida): boolean {
+  if (p.eventoHecho || p.jefe || p.tienda || p.terminada) return false
+  return p.tiempoRestante <= NIVELES[p.nivel - 1].duracionS * 0.55
+}
+
+export function marcarEvento(p: Partida): Partida {
+  return { ...p, eventoHecho: true }
+}
+
+// `azar` en [0, 1): se inyecta para poder probarlo sin Math.random
+export function elegirEvento(nivel: Nivel, azar: number): TipoEvento {
+  return nivel.eventos[Math.floor(azar * nivel.eventos.length)]
+}
+
 export function recibirGolpe(p: Partida): Partida {
   if (p.terminada) return p
   if (p.escudo) return { ...p, escudo: false, combo: 0 }
@@ -145,6 +191,7 @@ export function destruir(p: Partida, tipo: TipoEnemigo, elite = false): Partida 
   return {
     ...p,
     puntos: p.puntos + ganancia(p, ENEMIGOS[tipo].puntos * (elite ? 2 : 1)),
+    carga: sumarCarga(p, CARGA_POR_DERRIBO),
     combo: p.combo + 1,
     comboTiempo: COMBO_VENTANA_S,
     derribados: p.derribados + 1,
@@ -169,6 +216,7 @@ export function avanzarTiempo(p: Partida, segundos: number): Partida {
   const base = {
     ...p,
     tripleS: Math.max(0, p.tripleS - segundos),
+    sobrecargaS: Math.max(0, p.sobrecargaS - segundos),
     comboTiempo: Math.max(0, comboTiempo),
     combo: comboTiempo > 0 ? p.combo : 0,
   }
@@ -181,7 +229,7 @@ export function avanzarTiempo(p: Partida, segundos: number): Partida {
 export function salirDeTienda(p: Partida): Partida {
   if (!p.tienda) return p
   if (p.nivel >= NIVELES.length) return { ...p, tienda: false, jefe: true }
-  return { ...p, tienda: false, nivel: p.nivel + 1, tiempoRestante: NIVELES[p.nivel].duracionS }
+  return { ...p, tienda: false, eventoHecho: false, nivel: p.nivel + 1, tiempoRestante: NIVELES[p.nivel].duracionS }
 }
 
 export function recogerMonedas(p: Partida, cantidad: number): Partida {
@@ -205,8 +253,8 @@ export function comprar(p: Partida, tipo: TipoMejora): Partida {
   return q
 }
 
-export const danioBala = (p: Partida) => 1 + p.mejoras.potencia
-export const cadenciaMs = (p: Partida) => Math.round(CADENCIA_BASE_MS * 0.8 ** p.mejoras.cadencia)
+export const danioBala = (p: Partida) => 1 + p.mejoras.potencia + (p.sobrecargaS > 0 ? 2 : 0)
+export const cadenciaMs = (p: Partida) => Math.round((CADENCIA_BASE_MS * 0.8 ** p.mejoras.cadencia) / (p.sobrecargaS > 0 ? 2 : 1))
 export const radioIman = (p: Partida) => 90 + 80 * p.mejoras.iman
 export const alas = (p: Partida) => p.mejoras.alas
 

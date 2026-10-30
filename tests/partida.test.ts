@@ -24,6 +24,15 @@ import {
   radioIman,
   recogerMonedas,
   salirDeTienda,
+  CARGA_MAX,
+  CARGA_POR_DERRIBO,
+  CARGA_POR_ROCE,
+  SOBRECARGA_S,
+  activarSobrecarga,
+  elegirEvento,
+  marcarEvento,
+  pideEvento,
+  rozar,
   intervaloDisparo,
   vidaEnemigo,
 } from '../src/logica/partida'
@@ -290,5 +299,71 @@ describe('enemigos más duros', () => {
       expect(NIVELES[i].elite).toBeGreaterThan(NIVELES[i - 1].elite)
       expect(NIVELES[i].formacion).toBeGreaterThanOrEqual(NIVELES[i - 1].formacion)
     }
+  })
+})
+
+describe('sobrecarga y roce', () => {
+  const llena = () => ({ ...nuevaPartida(), carga: CARGA_MAX })
+
+  it('derribar y rozar balas llenan la barra', () => {
+    expect(destruir(nuevaPartida(), 'dron').carga).toBe(CARGA_POR_DERRIBO)
+    expect(rozar(nuevaPartida()).carga).toBe(CARGA_POR_ROCE)
+  })
+
+  it('rozar da unos puntos por el riesgo', () => {
+    expect(rozar(nuevaPartida()).puntos).toBeGreaterThan(0)
+  })
+
+  it('la barra no pasa del máximo', () => {
+    expect(rozar({ ...nuevaPartida(), carga: CARGA_MAX - 1 }).carga).toBe(CARGA_MAX)
+  })
+
+  it('solo se activa con la barra llena', () => {
+    const p = { ...nuevaPartida(), carga: CARGA_MAX - 1 }
+    expect(activarSobrecarga(p)).toBe(p)
+    expect(activarSobrecarga(llena())).toMatchObject({ carga: 0, sobrecargaS: SOBRECARGA_S })
+  })
+
+  it('durante la sobrecarga la barra no se llena y se acaba con el tiempo', () => {
+    const p = activarSobrecarga(llena())
+    expect(destruir(p, 'dron').carga).toBe(0)
+    expect(rozar(p).carga).toBe(0)
+    expect(avanzarTiempo(p, SOBRECARGA_S + 1).sobrecargaS).toBe(0)
+  })
+
+  it('durante la sobrecarga dispara más rápido y hace más daño', () => {
+    const p = activarSobrecarga(llena())
+    expect(cadenciaMs(p)).toBeLessThan(cadenciaMs(nuevaPartida()))
+    expect(danioBala(p)).toBeGreaterThan(danioBala(nuevaPartida()))
+  })
+})
+
+describe('eventos sorpresa', () => {
+  const mitad = () => ({ ...nuevaPartida(), tiempoRestante: NIVELES[0].duracionS * 0.5 })
+
+  it('al principio del nivel no hay evento y a la mitad sí', () => {
+    expect(pideEvento(nuevaPartida())).toBe(false)
+    expect(pideEvento(mitad())).toBe(true)
+  })
+
+  it('sale una sola vez por nivel y se reinicia al salir del hangar', () => {
+    const p = marcarEvento(mitad())
+    expect(pideEvento(p)).toBe(false)
+    expect(salirDeTienda({ ...p, tienda: true }).eventoHecho).toBe(false)
+  })
+
+  it('no sale con el jefe ni en el hangar', () => {
+    expect(pideEvento({ ...mitad(), jefe: true })).toBe(false)
+    expect(pideEvento({ ...mitad(), tienda: true })).toBe(false)
+  })
+
+  it('el mini-jefe no sale en el nivel 1 pero sí después', () => {
+    expect(NIVELES[0].eventos).not.toContain('miniJefe')
+    expect(NIVELES[1].eventos).toContain('miniJefe')
+  })
+
+  it('elegirEvento toma uno de los eventos del nivel', () => {
+    expect(elegirEvento(NIVELES[1], 0)).toBe(NIVELES[1].eventos[0])
+    expect(elegirEvento(NIVELES[1], 0.999)).toBe(NIVELES[1].eventos.at(-1))
   })
 })
