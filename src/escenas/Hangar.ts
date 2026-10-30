@@ -1,6 +1,6 @@
 import Phaser from 'phaser'
 import { CAPITULOS, CAPITULO_JEFE } from '../logica/historia'
-import { MEJORAS, NIVELES, VIDAS_MAX, comprar, costoMejora, type TipoMejora } from '../logica/partida'
+import { MEJORAS, MEJORAS_NAVE, NIVELES, VIDAS_MAX, comprar, costoMejora, type TipoMejora } from '../logica/partida'
 import { sonar } from '../sonido'
 import { ALTO, ANCHO, COLOR, boton, fondoEstrellas, texto, titulo } from '../ui'
 import type { Juego } from './Juego'
@@ -18,6 +18,7 @@ const ORDEN: TipoMejora[] = ['potencia', 'cadencia', 'alas', 'iman', 'vida', 'es
 // Tienda entre niveles: se lanza encima de Juego (pausado) y compra directamente sobre su partida.
 export class Hangar extends Phaser.Scene {
   private refrescar = () => {}
+  private cajas: Partial<Record<TipoMejora, Phaser.GameObjects.Container>> = {}
 
   constructor() {
     super('Hangar')
@@ -42,6 +43,7 @@ export class Hangar extends Phaser.Scene {
       tarjetas.forEach((t) => t())
     }
     this.refrescar()
+    if (p.evolucionada) this.mostrarFenix(false)
 
     boton(this, 728, ultimo ? '¡AL JEFE!' : 'CONTINUAR', () => {
       // Juego sigue pausado detrás; se reanuda al acabar la escena de historia
@@ -56,6 +58,41 @@ export class Hangar extends Phaser.Scene {
     }, ultimo ? COLOR.rojo : COLOR.verde)
   }
 
+  // Las cuatro mejoras completas explotan y dejan paso a la nave nueva.
+  private evolucionar() {
+    sonar('evolucion')
+    this.input.enabled = false
+    this.cameras.main.shake(900, 0.012)
+    MEJORAS_NAVE.forEach((tipo, i) => {
+      const caja = this.cajas[tipo]!
+      this.time.delayedCall(i * 180, () => {
+        this.add
+          .particles(caja.x, caja.y, 'chispa', { speed: { min: 80, max: 340 }, lifespan: 700, scale: { start: 2.2, end: 0 }, emitting: false })
+          .explode(36)
+        this.tweens.add({ targets: caja, scale: 0, alpha: 0, duration: 260, ease: 'Back.easeIn', onComplete: () => caja.setVisible(false) })
+      })
+    })
+    this.time.delayedCall(1100, () => {
+      this.cameras.main.flash(500, 255, 240, 200)
+      this.mostrarFenix(true)
+      this.input.enabled = true
+    })
+  }
+
+  // Panel que reemplaza las cuatro tarjetas cuando la nave ya evolucionó.
+  private mostrarFenix(animar: boolean) {
+    MEJORAS_NAVE.forEach((tipo) => this.cajas[tipo]!.setVisible(false))
+    const panel = this.add.container(ANCHO / 2, 330, [
+      this.add.rectangle(0, 0, 460, 280, COLOR.tarjeta).setStrokeStyle(3, 0xfacc15),
+      this.add.image(-115, 0, 'fenix').setScale(2.6),
+      titulo(this, 90, -62, '¡FÉNIX!', 24, '#facc15'),
+      texto(this, 90, -14, 'Nave evolucionada', 26),
+      texto(this, 90, 22, 'Disparo triple siempre', 24, COLOR.textoSuave),
+      texto(this, 90, 52, 'Más daño y cadencia', 24, COLOR.textoSuave),
+    ])
+    if (animar) this.tweens.add({ targets: panel, scale: { from: 0.2, to: 1 }, duration: 500, ease: 'Back.easeOut' })
+  }
+
   // Devuelve una función que repinta la tarjeta según la partida actual.
   private tarjeta(juego: Juego, tipo: TipoMejora, x: number, y: number) {
     const { nombre, descripcion, costos } = MEJORAS[tipo]
@@ -67,6 +104,7 @@ export class Hangar extends Phaser.Scene {
     const moneda = this.add.image(-30, 48, 'moneda').setScale(1.3)
     const precio = titulo(this, -8, 50, '', 13).setOrigin(0, 0.5)
     const caja = this.add.container(x, y, [fondo, icono, rotulo, nivel, desc, moneda, precio])
+    this.cajas[tipo] = caja
 
     fondo.setInteractive({ useHandCursor: true }).on('pointerup', () => {
       const antes = juego.partida
@@ -81,6 +119,7 @@ export class Hangar extends Phaser.Scene {
       this.time.delayedCall(120, () => fondo.setFillStyle(COLOR.tarjeta))
       this.tweens.add({ targets: caja, scale: { from: 1.08, to: 1 }, duration: 200, ease: 'Back.easeOut' })
       this.refrescar()
+      if (juego.partida.evolucionada && !antes.evolucionada) this.evolucionar()
     })
 
     return () => {

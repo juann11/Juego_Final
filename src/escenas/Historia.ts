@@ -3,6 +3,7 @@ import { cargar } from '../almacen'
 import { conNombre, type Capitulo, type Hablante } from '../logica/historia'
 import { sonar } from '../sonido'
 import { ALTO, ANCHO, COLOR, fondoEstrellas, texto, titulo } from '../ui'
+import { PAISAJES } from './paisajes'
 
 interface Datos {
   capitulo: Capitulo
@@ -15,7 +16,7 @@ const RETRATO: Record<Hablante, { textura: string; escala: number }> = {
   reina: { textura: 'jefe', escala: 0.9 },
 }
 
-// Escena entre niveles: planeta del capítulo, nave en vuelo y diálogos por radio.
+// Escena entre niveles: paisaje del capítulo, nave en vuelo y diálogos por radio.
 export class Historia extends Phaser.Scene {
   private datos!: Datos
   private indice = 0
@@ -53,21 +54,19 @@ export class Historia extends Phaser.Scene {
       .setOrigin(1, 0)
       .setPadding(10)
       .setInteractive({ useHandCursor: true })
-      .on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, e: Phaser.Types.Input.EventData) => {
+      .on('pointerup', (_p: Phaser.Input.Pointer, _x: number, _y: number, e: Phaser.Types.Input.EventData) => {
         e.stopPropagation() // que no cuente además como toque para avanzar
         this.terminar()
       })
-    this.input.on('pointerdown', () => this.avanzar())
+    // al soltar y no al apoyar: si no, ese mismo toque le cae al juego reanudado (al botón de pausa, por ejemplo)
+    this.input.on('pointerup', () => this.avanzar())
     this.mostrarLinea()
   }
 
-  private crearPaisaje({ planeta }: Capitulo) {
-    const grande = this.add.circle(370, 290, 110, planeta)
-    const sombra = this.add.circle(392, 306, 78, 0x000000, 0.28)
-    const crater = this.add.circle(330, 250, 18, 0x000000, 0.18)
-    this.tweens.add({ targets: [grande, sombra, crater], x: '-=50', duration: 14000 })
-
-    const nave = this.add.image(-60, 370, cargar('secreto', false) ? 'gato' : 'nave').setAngle(90).setScale(1.3)
+  private crearPaisaje({ paisaje }: Capitulo) {
+    PAISAJES[paisaje](this)
+    const textura = this.registry.get('nave') ?? 'nave'
+    const nave = this.add.image(-60, 370, textura).setAngle(90).setScale(1.3)
     this.tweens.add({ targets: nave, x: 170, duration: 1800, ease: 'Sine.easeOut' })
     this.tweens.add({ targets: nave, y: 385, duration: 1100, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' })
   }

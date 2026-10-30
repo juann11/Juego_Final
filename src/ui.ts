@@ -54,7 +54,7 @@ export function irA(escena: Phaser.Scene, clave: string, datos?: object) {
   const camara = escena.cameras.main
   if (camara.fadeEffect.isRunning) return
   camara.fadeOut(220, 15, 23, 42)
-  camara.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => escena.scene.start(clave, datos))
+  camara.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => escena.scene.start(clave, datos ?? {})) // sin datos Phaser repetiría los del último start
 }
 
 // Estrellas que caen de fondo; `velocidad` acelera la sensación de avance en el juego.

@@ -8,6 +8,7 @@ import {
   CARGA_MAX,
   SOBRECARGA_S,
   activarSobrecarga,
+  cruzaFaseJefe,
   alas,
   aplicarPowerUp,
   avanzarTiempo,
@@ -71,6 +72,10 @@ export class Juego extends Phaser.Scene {
   private hudBoton!: Phaser.GameObjects.Rectangle
   private jefe?: Sprite
   private jefeActivo = false
+  private refuerzos = false // la Reina se retiró y están sus oleadas en pantalla
+  private refuerzosDesde = 0
+  private refuerzosHasta = 0
+  private oleada = 0
   private vidaJefeMax = 0
   private barraJefe?: Phaser.GameObjects.Rectangle
   private generador?: Phaser.Time.TimerEvent
@@ -100,11 +105,15 @@ export class Juego extends Phaser.Scene {
     this.invulnerable = false
     this.jefe = undefined
     this.jefeActivo = false
+    this.refuerzos = false
+    this.oleada = 0
     this.alasNaves = []
     fondoEstrellas(this, 2)
     fondoEstrellas(this, 5).setAlpha(0.5)
 
-    this.nave = this.physics.add.sprite(ANCHO / 2, ALTO - 120, cargar('secreto', false) ? 'gato' : 'nave')
+    const textura = cargar('secreto', false) ? 'gato' : 'nave'
+    this.registry.set('nave', textura) // las escenas de historia muestran la nave actual
+    this.nave = this.physics.add.sprite(ANCHO / 2, ALTO - 120, textura)
     this.nave.setScale(1.3).setCollideWorldBounds(true).setDepth(2)
     // Caja de choque más pequeña que el sprite para que los roces se sientan justos
     this.nave.body!.setSize(this.nave.width * 0.45, this.nave.height * 0.6)
@@ -178,6 +187,7 @@ export class Juego extends Phaser.Scene {
 
     this.moverEnemigos()
     if (this.jefeActivo) this.moverJefe()
+    if (this.refuerzos) this.revisarRefuerzos()
     this.limpiarFueraDePantalla()
     if (antes.carga < CARGA_MAX && this.partida.carga >= CARGA_MAX) {
       sonar('nivel')
@@ -197,7 +207,8 @@ export class Juego extends Phaser.Scene {
   private disparar() {
     if (this.partida.terminada) return
     const { sobrecargaS, tripleS } = this.partida
-    const angulos = sobrecargaS > 0 ? [-18, -9, 0, 9, 18] : tripleS > 0 ? [-12, 0, 12] : [0]
+    const { evolucionada } = this.partida
+    const angulos = sobrecargaS > 0 ? [-18, -9, 0, 9, 18] : tripleS > 0 || evolucionada ? [-12, 0, 12] : [0]
     for (const a of angulos) this.crearBala(this.nave.x, this.nave.y - 34, a)
     // las alas disparan un tiro de cada dos
     if (this.tick++ % 2 === 0) for (const a of this.alasNaves) this.crearBala(a.x, a.y - 20, 0)
@@ -239,6 +250,10 @@ export class Juego extends Phaser.Scene {
 
   // Cadencia y alas dependen de las mejoras compradas en el Hangar.
   private aplicarMejoras() {
+    if (this.partida.evolucionada && this.nave.texture.key !== 'fenix') {
+      this.nave.setTexture('fenix')
+      this.registry.set('nave', 'fenix')
+    }
     this.disparo?.remove()
     this.disparo = this.time.addEvent({ delay: cadenciaMs(this.partida), loop: true, callback: () => this.disparar() })
     while (this.alasNaves.length < alas(this.partida)) {
@@ -566,6 +581,46 @@ export class Juego extends Phaser.Scene {
     })
   }
 
+  // A 2/3 y 1/3 de vida la Reina huye (intocable) y manda oleadas; vuelve cuando se limpian.
+  private retirarJefe() {
+    const jefe = this.jefe!
+    this.jefeActivo = false
+    this.barraJefe!.setFillStyle(0x64748b)
+    sonar('alerta')
+    this.banner('¡REFUERZOS!', COLOR.textoRojo)
+    this.tweens.add({ targets: jefe, y: -150, duration: 1300, ease: 'Sine.easeIn', onComplete: () => this.lanzarRefuerzos() })
+  }
+
+  private lanzarRefuerzos() {
+    const fila = (tipo: TipoEnemigo, ...xs: number[]) => () => xs.forEach((x) => this.crearEnemigo(tipo, x, -40, false))
+    const olas = [() => this.lanzarFormacion(), fila('tirador', 130, 350), () => this.lanzarFormacion(), fila('kamikaze', 90, 240, 390)]
+    if (this.oleada++ > 0) olas.push(fila('orbe', 240), fila('acorazado', 120, 360))
+    olas.forEach((ola, i) => this.time.delayedCall(i * 1400, () => this.partida.terminada || ola()))
+    this.refuerzos = true
+    this.refuerzosDesde = this.time.now + olas.length * 1400
+    this.refuerzosHasta = this.refuerzosDesde + 15000 // por si quedan enemigos que no se dejan derribar a tiempo
+  }
+
+  private revisarRefuerzos() {
+    const ahora = this.time.now
+    if (ahora < this.refuerzosDesde || (this.enemigos.getLength() > 0 && ahora < this.refuerzosHasta)) return
+    this.refuerzos = false
+    const jefe = this.jefe!
+    sonar('alerta')
+    this.banner('¡LA REINA\nREGRESA!', COLOR.textoRojo)
+    this.tweens.add({
+      targets: jefe,
+      y: 170,
+      duration: 1800,
+      ease: 'Sine.easeOut',
+      onComplete: () => {
+        this.barraJefe!.setFillStyle(COLOR.rojo)
+        this.jefeActivo = true
+        jefe.setData({ proxAbanico: this.time.now + 800, proxApuntado: this.time.now + 1800 })
+      },
+    })
+  }
+
   private moverJefe() {
     const jefe = this.jefe!
     const ahora = this.time.now
@@ -598,6 +653,7 @@ export class Juego extends Phaser.Scene {
     this.destello(jefe)
     sonar('impacto')
     this.barraJefe!.width = 400 * Math.max(0, vida / this.vidaJefeMax)
+    if (cruzaFaseJefe(vidaAntes, vida, this.vidaJefeMax)) this.retirarJefe()
     const mitad = this.vidaJefeMax / 2
     if (vidaAntes > mitad && vida <= mitad && vida > 0) {
       this.textoFlotante(ANCHO / 2, ALTO / 2, '¡MODO FURIA!', COLOR.textoRojo, 40)
@@ -637,7 +693,8 @@ export class Juego extends Phaser.Scene {
     const resultado = { ...registro, gano, nivel, derribados }
     this.time.delayedCall(gano ? 3200 : 1800, () => {
       if (!gano) return irA(this, 'Puntajes', { resultado })
-      irA(this, 'Historia', { capitulo: EPILOGO, alTerminar: (h: Phaser.Scene) => irA(h, 'Puntajes', { resultado }) })
+      const irAFinal = (creditos: Phaser.Scene) => irA(creditos, 'Final', { resultado })
+      irA(this, 'Historia', { capitulo: EPILOGO, alTerminar: (h: Phaser.Scene) => irA(h, 'Creditos', { alTerminar: irAFinal }) })
     })
   }
 

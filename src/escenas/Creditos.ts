@@ -16,7 +16,8 @@ export class Creditos extends Phaser.Scene {
     super('Creditos')
   }
 
-  create() {
+  // alTerminar: después de ganar los créditos continúan a la escena final en vez de volver al menú
+  create(datos: { alTerminar?: (escena: Phaser.Scene) => void }) {
     this.cameras.main.fadeIn(220, 15, 23, 42)
     fondoEstrellas(this)
     titulo(this, ANCHO / 2, 60, 'CRÉDITOS', 24, COLOR.textoVerde)
@@ -33,6 +34,7 @@ export class Creditos extends Phaser.Scene {
     }
 
     texto(this, ANCHO / 2, 640, 'Pista: el título guarda un secreto...', 24, COLOR.textoSuave)
-    boton(this, 720, 'VOLVER', () => irA(this, 'Home'), COLOR.azul)
+    const { alTerminar } = datos
+    boton(this, 720, alTerminar ? 'CONTINUAR' : 'VOLVER', () => (alTerminar ? alTerminar(this) : irA(this, 'Home')), COLOR.azul)
   }
 }

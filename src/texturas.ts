@@ -108,6 +108,23 @@ const SPRITES: Record<string, string[]> = {
     '.ggdddddddddgg.',
     '...oo.....oo...',
   ],
+  // nave evolucionada: aparece al completar todas las mejoras
+  fenix: [
+    '......b......',
+    '.....rcr.....',
+    '....rcccr....',
+    '....rrcrr....',
+    'y..rrrrrrr..y',
+    'or.rryyyrr.ro',
+    'orrrryyyrrrro',
+    'oyrrrrrrrrryo',
+    '.oyrr.r.rryo.',
+    '..oy..r..yo..',
+    '...y.....y...',
+  ],
+  // cinemática final
+  familiar: ['.kkkk.', '.yyyy.', '.yyyy.', '.pppp.', 'pppppp', '.pppp.', 'pppppp', '.y..y.', '.k..k.'],
+  perro: ['o.....oo', '.ooooooo', '.oooooo.', '.o....o.', '.k....k.'],
   // retrato de la comandante Vega en los diálogos
   vega: ['.ooooo.', 'ooyyyoo', 'oykykyo', 'oyyyyyo', '.yyryy.', '..yyy..', '.aaaaa.', 'aaybyaa', 'aaaaaaa'],
   // piloto de la intro: dos cuadros para animar la carrera

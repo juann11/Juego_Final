@@ -3,7 +3,7 @@ import { cargar, guardar } from './almacen'
 
 type Efecto =
   | 'clic' | 'golpe' | 'nivel' | 'fin' | 'victoria' | 'secreto'
-  | 'disparo' | 'explosion' | 'powerup' | 'alerta' | 'escudo' | 'impacto' | 'moneda' | 'error' | 'picada' | 'roce' | 'sobrecarga' | 'motor'
+  | 'disparo' | 'explosion' | 'powerup' | 'alerta' | 'escudo' | 'impacto' | 'moneda' | 'error' | 'picada' | 'roce' | 'sobrecarga' | 'motor' | 'evolucion' | 'final'
 
 interface Sonido {
   notas: [number, number][] // [frecuencia Hz, duración s] en secuencia
@@ -29,6 +29,12 @@ const EFECTOS: Record<Efecto, Sonido> = {
   picada: { notas: [[900, 0.06], [700, 0.06], [500, 0.08]], onda: 'sawtooth', vol: 0.04 },
   roce: { notas: [[1800, 0.05]], onda: 'sine', vol: 0.06 },
   sobrecarga: { notas: [[330, 0.07], [494, 0.07], [659, 0.07], [988, 0.07], [1319, 0.25]], onda: 'square', vol: 0.1 },
+  evolucion: { notas: [[262, 0.1], [330, 0.1], [392, 0.1], [523, 0.1], [659, 0.1], [784, 0.1], [1047, 0.15], [1319, 0.6]], onda: 'square', vol: 0.1 },
+  final: {
+    notas: [[392, 0.8], [440, 0.8], [523, 1.2], [494, 0.8], [440, 0.8], [392, 1.6], [330, 0.8], [392, 0.8], [440, 1.2], [392, 2.4]],
+    onda: 'triangle',
+    vol: 0.14,
+  },
   motor: { notas: [[70, 0.3], [90, 0.3], [120, 0.3], [170, 0.4], [240, 0.5]], onda: 'sawtooth', vol: 0.08 },
 }
 
