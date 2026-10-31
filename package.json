@@ -1,7 +1,7 @@
 {
-  "name": "juego",
+  "name": "escuadron-estelar",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -24,5 +24,6 @@
     "@fontsource/press-start-2p": "^5.3.0",
     "@fontsource/vt323": "^5.3.0",
     "phaser": "^3.90.0"
-  }
+  },
+  "description": "Shooter espacial para Android hecho con Phaser, TypeScript y Capacitor"
 }
