@@ -1,108 +1,352 @@
 # Escuadrón Estelar
 
-Shooter espacial para Android: pilotas un caza que dispara solo, derribas escuadrones enemigos durante 6 niveles con historia y al final enfrentas a la Reina del Enjambre. Tienes 3 vidas (hasta 5 con power-ups; depende de la dificultad). Al terminar un nivel, si te quedan menos de 3 vuelves a 3.
+Shooter espacial pixel art para Android. Pilotas el último caza de la Base Aurora: atraviesas 6 niveles con historia, mejoras tu nave entre misiones y enfrentas a la Reina del Enjambre para volver a casa.
 
-- **Enemigos que atacan:**
+**Entrega #4 - Final (Juego)** · Aplicaciones Móviles · UPB · Autor: Juan José Ospina (JJ)
 
-  | Enemigo | Vida base | Ataque |
-  |---|---|---|
-  | Dron | 2 | Dispara recto; a veces baja en escuadrón de 5 en V |
-  | Zigzag | 4 | Ondea y te apunta |
-  | Meteorito | 4 | Choca |
-  | Kamikaze | 3 | Se marca en rojo y se lanza en picada |
-  | Tirador | 7 | Se detiene y dispara ráfagas de 3 |
-  | Orbe | 9 | Gira y suelta anillos de 10 balas |
-  | Acorazado | 14 | Crucero lento que dispara abanicos de 5 |
+| | | |
+|:---:|:---:|:---:|
+| ![Menú principal](docs/capturas/home.png) | ![Partida en el nivel 5](docs/capturas/juego.png) | ![Tienda del Hangar](docs/capturas/hangar.png) |
+| Menú | Partida | Hangar |
+| ![Escena de historia](docs/capturas/historia.png) | ![Pelea contra la Reina](docs/capturas/jefe.png) | ![Cinemática final](docs/capturas/final.png) |
+| Historia | La Reina | Final |
 
-  La vida sube un 25% y la cadencia un 15% por nivel. **Élites** (brillo dorado): doble vida, doble puntos y triple monedas; salen más en niveles altos. Los enemigos con 4+ de vida muestran barra de vida.
-- **Monedas y Hangar:** los enemigos sueltan monedas (se atraen al pasar cerca). Al terminar cada nivel recibes un bono y se abre el **Hangar** para mejorar la nave antes del siguiente nivel o del jefe:
+## Contenido
 
-  | Mejora | Efecto | Precios |
-  |---|---|---|
-  | Potencia | +1 daño por bala | 25 · 60 · 110 |
-  | Cadencia | Disparas un 20% más rápido por nivel | 20 · 50 · 90 |
-  | Alas | Naves de apoyo que disparan contigo | 40 · 90 |
-  | Imán | Atrae monedas desde más lejos | 15 · 35 |
-  | Reparar | +1 vida (recomprable) | 30 |
-  | Escudo | Bloquea un golpe (recomprable) | 20 |
+- [Cómo se juega](#cómo-se-juega)
+- [Historia y niveles](#historia-y-niveles)
+- [Enemigos](#enemigos)
+- [Sistemas del juego](#sistemas-del-juego)
+- [Dificultad](#dificultad)
+- [Pantallas y flujo](#pantallas-y-flujo)
+- [Requisitos de la entrega](#requisitos-de-la-entrega)
+- [Diseño](#diseño)
+- [Tecnología y arquitectura](#tecnología-y-arquitectura)
+- [Instalación y ejecución](#instalación-y-ejecución)
+- [Pruebas](#pruebas)
+- [Publicación en Google Play](#publicación-en-google-play)
+- [Privacidad](#privacidad)
+- [Uso de IA](#uso-de-ia)
+- [Créditos y licencias](#créditos-y-licencias)
 
-  Se ajusta en `MEJORAS` de `src/logica/partida.ts`. Al completar Potencia, Cadencia, Alas e Imán las mejoras explotan y la nave evoluciona al **Fénix**: disparo triple siempre, más daño y más cadencia.
-- **La Reina (jefe final):** ráfagas en abanico, disparos apuntados y modo furia a mitad de vida. Al bajar a 2/3 y 1/3 de vida se retira, queda intocable y manda oleadas de enemigos; vuelve cuando se limpian.
-- **Historia:** seis capítulos con diálogos por radio y un escenario animado distinto en cada uno (`src/escenas/paisajes.ts`), escena antes del jefe y epílogo. Al ganar: créditos y cinemática final del piloto volviendo a casa.
-- **Sobrecarga:** rozar balas enemigas sin que te toquen y derribar enemigos llena una barra. Con la barra llena, pulsa ACTIVAR (o espacio): 6 s de invencibilidad con disparo en abanico, el doble de rápido y con +2 de daño.
-- **Eventos sorpresa:** a mitad de cada nivel sale uno: lluvia de meteoritos, carguero con monedas que huye o mini-jefe (desde el nivel 2).
-- **Power-ups:** disparo triple (10 s), escudo (absorbe un golpe) y vida extra.
-- **Combos:** derribos seguidos suben el multiplicador hasta x5; un golpe o 2.5 s sin derribar lo reinician.
-- **Dificultad** (se elige en el menú y se guarda):
+## Cómo se juega
 
-  | | Fácil | Normal | Difícil |
-  |---|---|---|---|
-  | Velocidad enemigos | ×0.8 | ×1 | ×1.25 |
-  | Tiempo entre enemigos | ×1.3 | ×1 | ×0.75 |
-  | Vida del jefe | 192 | 320 | 480 |
-  | Vidas iniciales | 5 | 3 | 2 |
-  | Prob. power-up | 15% | 10% | 7% |
-  | Puntos | ×0.5 | ×1 | ×1.5 |
+La nave dispara sola: tu trabajo es moverte, esquivar y decidir cuándo gastar tus recursos. Cada nivel dura un tiempo fijo; si sobrevives hasta que el contador llega a cero, lo superas. Al terminar los 6 niveles peleas contra la Reina. La partida acaba si te quedas sin vidas o si derrotas a la Reina.
 
-  Se ajusta en `DIFICULTADES` de `src/logica/partida.ts`.
-- **Pausa** con botón, con el botón atrás de Android o al salir de la app (incluye sonido sí/no); música chiptune y vibración al recibir golpes.
+### Controles
 
-Entrega #4 - Final (Juego) · Aplicaciones Móviles · UPB.
+| Acción | Android | Navegador |
+|---|---|---|
+| Mover la nave | Arrastrar el dedo en cualquier parte de la pantalla | Flechas, o arrastrar con el mouse |
+| Disparar | Automático | Automático |
+| Activar la Sobrecarga | Botón ACTIVAR | Botón ACTIVAR o barra espaciadora |
+| Pausar | Botón `II` o botón atrás | Botón `II` |
+| Salir de la app | Botón atrás en el menú | No aplica |
 
-## Secciones
+El arrastre es relativo, así el dedo no tapa la nave. La nave se mueve en los dos tercios inferiores de la pantalla. El juego también se pausa solo si la app pasa a segundo plano.
 
-| Escena | Qué hace |
+### Lo que ves en pantalla
+
+- **Arriba:** puntaje, multiplicador de combo, nivel, vidas, tiempo restante (o `JEFE`), monedas y pausa.
+- **Abajo:** barra de Sobrecarga y botón ACTIVAR, que se ilumina cuando la barra está llena.
+
+## Historia y niveles
+
+El Enjambre destruye la Base Aurora. Mientras los civiles escapan, el piloto (que lleva el nombre que elijas en el menú) sube a su caza y despega. Guiado por radio por la comandante Vega, persigue a la flota a través de la galaxia, rescata a los pilotos capturados, cruza la Puerta del Enjambre y enfrenta a la Reina. Después de los créditos, una cinemática lo muestra llegando a casa al atardecer, donde alguien lo esperaba.
+
+Cada capítulo tiene su propio color de fondo, diálogos y escenario animado, y cada uno presenta una amenaza nueva. Los diálogos se pueden saltar.
+
+| Nivel | Capítulo | Duración | Enemigo nuevo | Prob. de élite | Prob. de escuadrón |
+|---|---|---|---|---|---|
+| 1 | Base Aurora | 30 s | Dron y meteorito | 3% | 5% |
+| 2 | Cinturón de Cristal | 30 s | Zigzag | 5% | 7% |
+| 3 | Nebulosa Carmesí | 35 s | Kamikaze | 8% | 9% |
+| 4 | Luna Prisión | 35 s | Tirador | 10% | 11% |
+| 5 | Astillero Negro | 40 s | Acorazado | 12% | 13% |
+| 6 | Puerta del Enjambre | 40 s | Orbe | 14% | 15% |
+| Final | La Reina | Hasta derrotarla | Jefe final | - | - |
+
+Cada nivel también aumenta la velocidad de los enemigos (de 170 a 270 px/s) y su frecuencia de aparición (de uno cada 800 ms a uno cada 500 ms).
+
+### La Reina del Enjambre
+
+Tiene 320 de vida en dificultad Normal y una barra visible en la parte superior.
+
+1. Ataca con abanicos de balas y ráfagas de 3 disparos apuntados a la nave.
+2. Al bajar a 2/3 y a 1/3 de vida se retira y no recibe daño mientras envía oleadas de refuerzos. Vuelve cuando se limpian, o unos 15 s después de la última oleada. La segunda retirada suma orbes y acorazados.
+3. Al llegar a la mitad de vida entra en **modo furia**: se mueve y dispara más rápido, con abanicos de 9 balas en vez de 7.
+
+## Enemigos
+
+| Enemigo | Vida | Puntos | Monedas | Comportamiento |
+|---|---|---|---|---|
+| Dron | 2 | 10 | 1 | Dispara recto; a veces baja en escuadrón de 5 en V |
+| Meteorito | 4 | 15 | 1 | No dispara; choca contra la nave |
+| Zigzag | 4 | 25 | 2 | Ondea de lado a lado y dispara apuntando |
+| Kamikaze | 3 | 30 | 2 | Se detiene, parpadea en rojo y se lanza en picada |
+| Tirador | 7 | 45 | 3 | Se queda quieto y dispara ráfagas de 3 |
+| Orbe | 9 | 60 | 4 | Gira y suelta anillos de 10 balas |
+| Acorazado | 14 | 90 | 6 | Crucero lento que dispara abanicos de 5 |
+| Carguero | 12 | 100 | 12 | Solo sale como evento; cruza la pantalla sin atacar |
+
+Por cada nivel, la vida enemiga sube 25% y la cadencia de disparo 15%. Los enemigos con 4 o más de vida muestran una barra sobre ellos.
+
+**Élites (brillo dorado):** tienen el doble de vida y dan el doble de puntos, el triple de monedas y el triple de probabilidad de soltar un power-up.
+
+## Sistemas del juego
+
+### Vidas
+
+Empiezas con 3 vidas en Normal y puedes llegar a 5. Tras un golpe, la nave es invulnerable durante 1.2 s. Al superar un nivel, si tienes menos de 3 vidas subes a 3; si tienes más, las conservas.
+
+### Puntaje y combos
+
+```
+puntos ganados = puntos base × multiplicador de combo × factor de dificultad
+```
+
+Cada 5 derribos seguidos el multiplicador sube 1, hasta x5. Recibir un golpe (aunque lo absorba el escudo) o pasar 2.5 s sin derribar reinicia el combo. Derrotar a la Reina vale 2000 puntos base.
+
+### Monedas y Hangar
+
+Los enemigos sueltan monedas, que se atraen al pasar cerca. Al terminar un nivel, las monedas en pantalla se cobran solas y recibes un bono de 10 × número de nivel. Luego se abre el Hangar:
+
+| Mejora | Efecto | Precios |
+|---|---|---|
+| Potencia | +1 de daño por bala | 25 · 60 · 110 |
+| Cadencia | 20% menos de tiempo entre disparos por nivel | 20 · 50 · 90 |
+| Alas | Hasta 2 naves de apoyo, que disparan uno de cada dos tiros | 40 · 90 |
+| Imán | Aumenta el radio de atracción de monedas | 15 · 35 |
+| Reparar | +1 vida, hasta 5 (recomprable) | 30 |
+| Escudo | Bloquea un golpe (recomprable, uno a la vez) | 20 |
+
+Las monedas y las mejoras duran solo la partida en curso.
+
+### Evolución: el Fénix
+
+Al completar Potencia, Cadencia, Alas e Imán, las cuatro tarjetas explotan y la nave se convierte en el **Fénix**, una nave roja con disparo triple permanente, +2 de daño y 15% menos de tiempo entre disparos. El Fénix aparece también en las escenas de historia y en el final.
+
+### Sobrecarga
+
+Es una habilidad que se carga jugando: cada derribo suma 3 y cada roce suma 8, hasta 100. Un **roce** cuenta cuando una bala enemiga pasa muy cerca sin tocarte, y además da 5 puntos base. Con la barra llena, ACTIVAR da 6 s de **invencibilidad total**, abanico de 5 balas, el doble de cadencia y +2 de daño. La barra no se llena mientras la Sobrecarga está activa.
+
+### Eventos sorpresa
+
+Cerca de la mitad de cada nivel ocurre un evento al azar:
+
+- **Lluvia de meteoritos:** cae una tormenta de 29 meteoritos.
+- **Carguero:** una nave con 12 monedas cruza la pantalla; hay que derribarla antes de que escape.
+- **Mini-jefe:** baja un acorazado élite (desde el nivel 2).
+
+### Power-ups
+
+Al derribar un enemigo puede caer uno, según la dificultad:
+
+| Power-up | Efecto | Probabilidad |
+|---|---|---|
+| Disparo triple | 3 balas durante 10 s | 50% |
+| Escudo | Absorbe un golpe | 25% |
+| Vida extra | +1 vida; con 5 vidas se convierte en escudo | 25% |
+
+### Easter egg
+
+Toca 5 veces el título en el menú para activar el **Modo Gato Espacial**, que cambia la nave por un gato. Se apaga de la misma forma y queda guardado. Los créditos dejan una pista.
+
+## Dificultad
+
+Se elige en el menú y queda guardada.
+
+| | Fácil | Normal | Difícil |
+|---|---|---|---|
+| Velocidad de enemigos | ×0.8 | ×1 | ×1.25 |
+| Tiempo entre enemigos y entre disparos | ×1.3 | ×1 | ×0.75 |
+| Vida de enemigos | ×0.75 | ×1 | ×1.3 |
+| Vida de la Reina | 192 | 320 | 480 |
+| Vidas iniciales | 5 | 3 | 2 |
+| Probabilidad de power-up | 15% | 10% | 7% |
+| Factor de puntos | ×0.5 | ×1 | ×1.5 |
+
+El factor de puntos hace que el top 5 premie a quien juega en mayor dificultad.
+
+## Pantallas y flujo
+
+| Pantalla | Qué hace |
 |---|---|
-| Splash | Logo animado y barra de carga (toca para saltar) |
-| Home | Jugar, Puntajes, Créditos, nombre del piloto y sonido on/off |
-| Intro | Cinemática del piloto subiendo a la nave y despegando (toca para saltar) |
-| Juego | 6 niveles por tiempo + jefe final, vidas, combos, power-ups y monedas (con capa de Pausa) |
-| Hangar | Tienda de mejoras entre niveles |
-| Historia | Diálogos y paisaje del capítulo entre niveles, y epílogo |
-| Final | Cinemática después de los créditos al ganar |
-| Puntajes | Resultado, derribos y top 5 guardado |
-| Créditos | Equipo, tecnologías y uso de IA |
+| Splash | Logo animado y barra de carga; se salta con un toque |
+| Home | Jugar, Puntajes, Créditos, nombre del piloto, dificultad, sonido y mejor puntaje |
+| Intro | Cinemática del piloto subiendo a la nave y despegando; se salta con un toque |
+| Juego | Niveles, jefe final, HUD y toda la acción |
+| Pausa | Capa sobre el juego: continuar, volver al menú y sonido |
+| Hangar | Tienda de mejoras y evolución al Fénix |
+| Historia | Diálogos por radio y escenario animado de cada capítulo |
+| Puntajes | Resultado de la partida y top 5 |
+| Créditos | Equipo, tecnologías, uso de IA y pista del easter egg |
+| Final | Cinemática después de los créditos, solo al ganar |
 
-**Persistencia:** top 5, nombre del piloto, sonido y modo secreto se guardan en `localStorage` (funciona igual en la app Android).
-**Easter egg:** toca 5 veces el título en el menú. 🐱
+```mermaid
+flowchart LR
+    Splash --> Home
+    Home --> Intro --> Juego
+    Home --> Puntajes
+    Home --> Creditos[Créditos]
+    Juego <--> Pausa
+    Juego -->|nivel superado| Hangar --> Historia --> Juego
+    Juego -->|sin vidas| Puntajes
+    Juego -->|Reina derrotada| Epilogo[Historia: epílogo]
+    Epilogo --> Creditos2[Créditos]
+    Creditos2 --> Final --> Puntajes
+    Puntajes -->|otra vez| Juego
+    Puntajes --> Home
+```
+
+## Requisitos de la entrega
+
+| Requisito | Cumplimiento |
+|---|---|
+| Mínimo 3 niveles, tiempo o vidas | 6 niveles con tiempo, más jefe final y sistema de vidas |
+| Híbrido o nativo | Híbrido con Capacitor |
+| Splash, Home, Juego, Puntaje y Créditos | Las 5, más Intro, Pausa, Hangar, Historia y Final |
+| UI personalizada | Pixel art, botones y HUD propios, sin componentes genéricos |
+| Persistencia entre vistas | Top 5, nombre, dificultad, sonido y easter egg en `localStorage`; la partida pasa entre escenas |
+| Animaciones | Tweens, partículas, sacudidas de cámara y cinemáticas |
+| Sonidos | Música y 20 efectos chiptune generados por código, más vibración en Android |
+| Repositorio | [github.com/juann11/Juego_Final](https://github.com/juann11/Juego_Final) |
+| Wireframe en grises | [Figma](https://www.figma.com/design/Rmgk68Xv0oKn7tQiDzksmf) y [`docs/wireframes.svg`](docs/wireframes.svg); el boceto en papel se entrega aparte |
+| Bonus: easter eggs | Modo Gato Espacial |
+| Bonus: multijugador Firebase | No implementado |
 
 ## Diseño
 
-Wireframes en escala de grises de las 10 pantallas en [`docs/wireframes.svg`](docs/wireframes.svg). Para editarlos en Figma, arrastra el archivo a un lienzo.
+Los wireframes en escala de grises cubren las 10 pantallas:
 
-## Stack
+- **Figma:** [Escuadrón Estelar - Wireframes](https://www.figma.com/design/Rmgk68Xv0oKn7tQiDzksmf), con capas editables y un componente de botón.
+- **Repositorio:** [`docs/wireframes.svg`](docs/wireframes.svg).
 
-- **Phaser 3** (escenas, física arcade, tweens, partículas) + **TypeScript** + **Vite**
-- **Capacitor** para generar el proyecto Android
-- **Vitest** para la lógica del juego (`src/logica`)
-- Sprites pixel art y sonidos chiptune generados por código (`src/texturas.ts`, `src/sonido.ts`): no hay assets de terceros que licenciar.
+La identidad visual es de arcade retro: fondo azul noche `#0F172A`, verde para títulos y acciones, azul para botones secundarios, dorado para recompensas y rojo para el peligro. Los títulos usan Press Start 2P y los textos VT323. Las balas enemigas son rojas con centro blanco para distinguirlas de cualquier fondo.
 
-## Comandos
+## Tecnología y arquitectura
 
-```bash
-npm install
-npm run dev        # jugar en el navegador (flechas o arrastrar el mouse)
-npm test           # tests de la lógica
-npm run android    # build web + copia al proyecto Android
-npx cap open android   # abrir en Android Studio
-```
+| Herramienta | Uso | Por qué |
+|---|---|---|
+| Phaser 3 | Escenas, física, tweens y partículas | Motor 2D probado que corre en WebView |
+| TypeScript | Lenguaje | Detecta errores de tipos antes de jugar |
+| Vite | Servidor de desarrollo y build | Arranque y recarga rápidos |
+| Capacitor | Empaquetado Android | Convierte el build web en una app nativa instalable |
+| Vitest | Pruebas | Se integra con Vite y TypeScript sin configuración extra |
 
-## Publicar en Google Play
+Android: `minSdk` 24 (Android 7), `targetSdk` y `compileSdk` 36, orientación vertical. El lienzo es de 480×800 y se escala a cada pantalla.
 
-1. `npm run android` y `npx cap open android`.
-2. En Android Studio: *Build → Generate Signed App Bundle / APK → Android App Bundle*, crea un keystore (guárdalo fuera del repo) y genera el `.aab`.
-3. Sube el `.aab` en Play Console (el ícono de 512 px está en `assets/icono-play-512.png`). Sube `versionCode` en `android/app/build.gradle` en cada nueva versión.
-
-## Estructura
+### Estructura
 
 ```
 src/
-  logica/      partida.ts (niveles, vidas, combos, power-ups, monedas, mejoras, sobrecarga, eventos, jefe), puntaje.ts (top 5)
-  escenas/     Splash, Home, Intro, Juego, Pausa, Hangar, Historia, Puntajes, Creditos, Final
-  almacen.ts   persistencia
-  sonido.ts    efectos y música con Web Audio
-  texturas.ts  sprites pixel art
-  ui.ts        paleta, fuentes, botones y transiciones
-tests/         Vitest
-android/       proyecto nativo generado por Capacitor
+  logica/        Reglas del juego, sin Phaser
+    partida.ts   Niveles, vidas, combos, mejoras, sobrecarga, eventos y jefe
+    historia.ts  Guion de capítulos, epílogo y textos del final
+    puntaje.ts   Top 5
+    nombre.ts    Limpieza del nombre del piloto
+  escenas/       Una clase por pantalla, más paisajes.ts (escenarios animados)
+  almacen.ts     Persistencia en localStorage
+  editorTexto.ts Editor del nombre, con el teclado del celular
+  sonido.ts      Música y efectos con Web Audio
+  texturas.ts    Sprites pixel art definidos como matrices de texto
+  ui.ts          Paleta, fuentes, botones y transiciones
+  main.ts        Arranque de Phaser y botón atrás de Android
+tests/           Pruebas con Vitest
+docs/            Wireframes y capturas
+assets/          Ícono de 512 px para Google Play
+android/         Proyecto nativo generado por Capacitor
 ```
+
+### Decisiones clave
+
+- **Lógica separada de Phaser.** Las reglas son funciones puras en `src/logica`: reciben el estado y devuelven uno nuevo. Así se prueban sin abrir el juego, y las escenas se limitan a dibujar y reaccionar.
+- **Balance en un solo lugar.** Vidas, precios, enemigos y niveles están en constantes al inicio de `partida.ts` (`ENEMIGOS`, `MEJORAS`, `NIVELES`, `DIFICULTADES`).
+- **Azar inyectado.** `elegirEnemigo` y `elegirEvento` reciben el número aleatorio como parámetro, para que los tests den siempre el mismo resultado.
+- **Arte y sonido por código.** Los sprites y el audio se generan en tiempo de ejecución: no hay archivos que cargar ni licencias que gestionar, y la app es liviana.
+- **`localStorage` para guardar.** Funciona igual en el navegador y en el WebView de Capacitor, sin dependencias nuevas.
+
+Se guardan, con el prefijo `esquiva-estelar:`, las claves `top`, `nombre`, `dificultad`, `sonido` y `secreto`. El prefijo y el identificador `com.upb.esquivaestelar` conservan el nombre inicial del proyecto.
+
+## Instalación y ejecución
+
+**Requisitos:** Node.js 22 o superior (probado con 24). Para Android: Android Studio con el SDK 36.
+
+```bash
+git clone https://github.com/juann11/Juego_Final.git
+```
+
+```bash
+cd Juego_Final
+```
+
+```bash
+npm install
+```
+
+| Comando | Qué hace |
+|---|---|
+| `npm run dev` | Abre el juego en el navegador en modo desarrollo |
+| `npm test` | Corre las pruebas |
+| `npm run build` | Revisa tipos y genera el build web en `dist/` |
+| `npm run android` | Genera el build y lo copia al proyecto Android |
+| `npx cap open android` | Abre el proyecto en Android Studio |
+
+Para instalar en un celular o emulador, corre `npm run android` y `npx cap open android`, y pulsa **Run** en Android Studio.
+
+Para generar un APK de prueba desde la terminal, con `JAVA_HOME` apuntando al JDK de Android Studio:
+
+```bash
+cd android && ./gradlew assembleDebug
+```
+
+El archivo queda en `android/app/build/outputs/apk/debug/app-debug.apk`.
+
+## Pruebas
+
+```bash
+npm test
+```
+
+La suite tiene **93 pruebas en 6 archivos**, todas en verde. La lógica del juego se desarrolló con TDD: primero la prueba, luego el código.
+
+| Archivo | Qué cubre |
+|---|---|
+| `partida.test.ts` | Niveles, vidas, combos, power-ups, tienda, evolución, sobrecarga, eventos, fases del jefe y dificultad |
+| `historia.test.ts` | Un capítulo por nivel y sustitución del nombre del piloto |
+| `puntaje.test.ts` | Orden y límite del top 5 |
+| `almacen.test.ts` | Guardado, valores por defecto y datos dañados |
+| `nombre.test.ts` | Limpieza y límite del nombre |
+| `editorTexto.test.ts` | Edición, aceptación y cancelación del nombre |
+
+**Pruebas manuales:** el juego se verificó en navegador y en emulador Android (Pixel 9): toques, arrastre, teclado, botón atrás, pausa y fin de partida.
+
+**Pendiente de verificar en un celular físico:** partida completa, sonido, vibración y activar la Sobrecarga con un segundo dedo mientras se arrastra la nave.
+
+## Publicación en Google Play
+
+**Estado:** app lista para firmar; publicación en proceso.
+
+1. Sube `versionCode` y `versionName` en `android/app/build.gradle` si es una versión nueva (la actual es la 1.0, código 1).
+2. Corre `npm run android` y `npx cap open android`.
+3. En Android Studio: *Build → Generate Signed App Bundle / APK → Android App Bundle*. Crea un keystore y guárdalo fuera del repositorio, con su contraseña: sin él no se pueden publicar actualizaciones.
+4. Sube el `.aab` a Play Console.
+5. Completa la ficha con el ícono de [`assets/icono-play-512.png`](assets/icono-play-512.png), las capturas de `docs/capturas/` y el enlace a la sección [Privacidad](#privacidad).
+
+Los keystores (`*.jks`, `*.keystore`) y los archivos `.env` están en `.gitignore`.
+
+## Privacidad
+
+Escuadrón Estelar no pide cuentas, no recopila datos personales, no muestra anuncios y no envía información a ningún servidor. El nombre del piloto, los puntajes y las preferencias se guardan solo en tu dispositivo, y se borran al desinstalar la app o limpiar sus datos.
+
+## Uso de IA
+
+El curso permite usar IA si se justifica y se entiende el código. **Claude Code** se usó como asistente para programar, generar pruebas y documentar. El autor definió las ideas y los cambios del juego, probó cada iteración y reportó los errores encontrados. Los créditos del juego también lo declaran.
+
+## Créditos y licencias
+
+- **Autor:** Juan José Ospina (JJ)
+- **Curso:** Aplicaciones Móviles, UPB
+- **Sprites, música y efectos:** creados por código para este proyecto
+- **Fuentes:** Press Start 2P y VT323 (SIL Open Font License)
+- **Librerías:** Phaser y Capacitor (MIT)
