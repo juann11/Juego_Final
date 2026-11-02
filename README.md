@@ -1,8 +1,35 @@
+<div align="center">
+
+<img src="assets/icono-play-512.png" alt="Ícono de Escuadrón Estelar" width="120">
+
 # Escuadrón Estelar
 
-Shooter espacial pixel art para Android. Pilotas el último caza de la Base Aurora: atraviesas 6 niveles con historia, mejoras tu nave entre misiones y enfrentas a la Reina del Enjambre para volver a casa.
+**Shooter espacial pixel art para Android, con historia, tienda de mejoras y jefe final.**
 
-**Entrega #4 - Final (Juego)** · Aplicaciones Móviles · UPB · Autor: Juan José Ospina (JJ)
+![Plataforma: Android 7+](https://img.shields.io/badge/Android-7%2B-3DDC84?logo=android&logoColor=white)
+![Phaser 3](https://img.shields.io/badge/Phaser-3.90-8B5CF6)
+![TypeScript 7](https://img.shields.io/badge/TypeScript-7-3178C6?logo=typescript&logoColor=white)
+![Capacitor 8](https://img.shields.io/badge/Capacitor-8-119EFF?logo=capacitor&logoColor=white)
+![93 pruebas en verde](https://img.shields.io/badge/pruebas-93%20en%20verde-22C55E?logo=vitest&logoColor=white)
+
+Entrega #4 - Final (Juego) · Aplicaciones Móviles · UPB · Juan José Ospina (JJ)
+
+</div>
+
+## Descripción
+
+El Enjambre destruyó la Base Aurora y solo queda un caza en el aire. En Escuadrón Estelar atraviesas 6 niveles con historia, mejoras tu nave entre misiones y enfrentas a la Reina del Enjambre para volver a casa.
+
+### Características principales
+
+- **Campaña completa:** 6 capítulos con diálogos, escenarios animados, jefe final y cinemáticas de inicio y cierre.
+- **8 tipos de enemigos:** cada uno ataca distinto, y los élites dorados son más resistentes.
+- **Progresión en cada partida:** las monedas compran mejoras en el Hangar, y al completarlas la nave evoluciona al Fénix.
+- **Decisiones durante la acción:** combos hasta x5, roces que cargan la Sobrecarga, eventos sorpresa y power-ups.
+- **Rejugable:** 3 dificultades, top 5 guardado y un easter egg por descubrir.
+- **Hecho a la medida:** sprites, música y efectos generados por código.
+
+## Capturas
 
 | | | |
 |:---:|:---:|:---:|
@@ -13,6 +40,8 @@ Shooter espacial pixel art para Android. Pilotas el último caza de la Base Auro
 
 ## Contenido
 
+- [Descripción](#descripción)
+- [Capturas](#capturas)
 - [Cómo se juega](#cómo-se-juega)
 - [Historia y niveles](#historia-y-niveles)
 - [Enemigos](#enemigos)
@@ -319,17 +348,23 @@ La suite tiene **93 pruebas en 6 archivos**, todas en verde. La lógica del jueg
 | `nombre.test.ts` | Limpieza y límite del nombre |
 | `editorTexto.test.ts` | Edición, aceptación y cancelación del nombre |
 
-**Pruebas manuales:** el juego se verificó en navegador y en emulador Android (Pixel 9): toques, arrastre, teclado, botón atrás, pausa y fin de partida.
+**Pruebas manuales:**
 
-**Pendiente de verificar en un celular físico:** partida completa, sonido, vibración y activar la Sobrecarga con un segundo dedo mientras se arrastra la nave.
+| Entorno | Qué se verificó |
+|---|---|
+| Navegador | Flujo de pantallas, teclado y mouse |
+| Emulador Android (Pixel 9) | Toques, arrastre, botón atrás, pausa y fin de partida |
+| Celular Android físico | Partida completa, sonido, vibración y Sobrecarga con un segundo dedo |
 
 ## Publicación en Google Play
 
-**Estado:** app lista para firmar; publicación en proceso.
+**Estado:** versión 1.0 firmada y lista para subir a Play Console.
 
-1. Sube `versionCode` y `versionName` en `android/app/build.gradle` si es una versión nueva (la actual es la 1.0, código 1).
+Para generar una versión nueva:
+
+1. Sube `versionCode` y `versionName` en `android/app/build.gradle` (la versión actual es la 1.0, código 1).
 2. Corre `npm run android` y `npx cap open android`.
-3. En Android Studio: *Build → Generate Signed App Bundle / APK → Android App Bundle*. Crea un keystore y guárdalo fuera del repositorio, con su contraseña: sin él no se pueden publicar actualizaciones.
+3. En Android Studio: *Build → Generate Signed App Bundle / APK → Android App Bundle*, y firma con la llave de subida del proyecto. La llave y su contraseña se guardan fuera del repositorio.
 4. Sube el `.aab` a Play Console.
 5. Completa la ficha con el ícono de [`assets/icono-play-512.png`](assets/icono-play-512.png), las capturas de `docs/capturas/` y el enlace a la sección [Privacidad](#privacidad).
 
