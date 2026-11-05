@@ -240,16 +240,22 @@ flowchart LR
 | Animaciones | Tweens, partículas, sacudidas de cámara y cinemáticas |
 | Sonidos | Música y 20 efectos chiptune generados por código, más vibración en Android |
 | Repositorio | [github.com/juann11/Juego_Final](https://github.com/juann11/Juego_Final) |
-| Wireframe en grises | [Figma](https://www.figma.com/design/Rmgk68Xv0oKn7tQiDzksmf) y [`docs/wireframes.svg`](docs/wireframes.svg); el boceto en papel se entrega aparte |
+| Wireframe en grises | [Figma](https://www.figma.com/design/Rmgk68Xv0oKn7tQiDzksmf) y [`docs/wireframes.svg`](docs/wireframes.svg); boceto en papel en [`docs/papel/`](docs/papel) |
 | Bonus: easter eggs | Modo Gato Espacial |
 | Bonus: multijugador Firebase | No implementado |
 
 ## Diseño
 
-Los wireframes en escala de grises cubren las 10 pantallas:
+El diseño empezó con bocetos a mano y luego pasó a wireframes digitales en escala de grises:
 
-- **Figma:** [Escuadrón Estelar - Wireframes](https://www.figma.com/design/Rmgk68Xv0oKn7tQiDzksmf), con capas editables y un componente de botón.
-- **Repositorio:** [`docs/wireframes.svg`](docs/wireframes.svg).
+- **Papel:** bocetos de Home, Intro, Juego, Pausa, Hangar, Historia, Puntajes, Créditos y Final, en [`docs/papel/`](docs/papel).
+- **Figma:** [Escuadrón Estelar - Wireframes](https://www.figma.com/design/Rmgk68Xv0oKn7tQiDzksmf), las 10 pantallas con capas editables y un componente de botón.
+- **Repositorio:** [`docs/wireframes.svg`](docs/wireframes.svg), copia de los wireframes digitales.
+
+| | | |
+|:---:|:---:|:---:|
+| ![Boceto de Home, Intro y Juego](docs/papel/hoja-1-home-intro-juego.jpeg) | ![Boceto de Pausa, Hangar e Historia](docs/papel/hoja-2-pausa-hangar-historia.jpeg) | ![Boceto de Puntajes, Créditos y Final](docs/papel/hoja-3-puntajes-creditos-final.jpeg) |
+| Home · Intro · Juego | Pausa · Hangar · Historia | Puntajes · Créditos · Final |
 
 La identidad visual es de arcade retro: fondo azul noche `#0F172A`, verde para títulos y acciones, azul para botones secundarios, dorado para recompensas y rojo para el peligro. Los títulos usan Press Start 2P y los textos VT323. Las balas enemigas son rojas con centro blanco para distinguirlas de cualquier fondo.
 
