@@ -55,6 +55,7 @@ El Enjambre destruyó la Base Aurora y solo queda un caza en el aire. En Escuadr
 - [Pruebas](#pruebas)
 - [Publicación en Google Play](#publicación-en-google-play)
 - [Privacidad](#privacidad)
+- [Presentación](#presentación)
 - [Uso de IA](#uso-de-ia)
 - [Créditos y licencias](#créditos-y-licencias)
 
@@ -242,6 +243,7 @@ flowchart LR
 | Repositorio | [github.com/juann11/Juego_Final](https://github.com/juann11/Juego_Final) |
 | Wireframe en grises | [Figma](https://www.figma.com/design/Rmgk68Xv0oKn7tQiDzksmf) y [`docs/wireframes.svg`](docs/wireframes.svg); boceto en papel en [`docs/papel/`](docs/papel) |
 | Publicar en Google Play | Versión 1.0 enviada a revisión en producción |
+| Presentación | [`docs/presentacion.pdf`](docs/presentacion.pdf) |
 | Bonus: easter eggs | Modo Gato Espacial |
 | Bonus: multijugador Firebase | No implementado |
 
@@ -390,6 +392,10 @@ Los keystores (`*.jks`, `*.keystore`) y los archivos `.env` están en `.gitignor
 Escuadrón Estelar no pide cuentas, no recopila datos personales, no muestra anuncios y no envía información a ningún servidor. El nombre del piloto, los puntajes y las preferencias se guardan solo en tu dispositivo, y se borran al desinstalar la app o limpiar sus datos.
 
 La política completa está publicada en [juann11.github.io/escuadron-estelar-privacidad](https://juann11.github.io/escuadron-estelar-privacidad/).
+
+## Presentación
+
+La presentación del proyecto está en [`docs/presentacion.pdf`](docs/presentacion.pdf): 14 diapositivas con la idea, las mecánicas, el diseño, la tecnología, las pruebas y el cumplimiento de la entrega.
 
 ## Uso de IA
 
