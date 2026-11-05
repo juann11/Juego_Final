@@ -241,6 +241,7 @@ flowchart LR
 | Sonidos | Música y 20 efectos chiptune generados por código, más vibración en Android |
 | Repositorio | [github.com/juann11/Juego_Final](https://github.com/juann11/Juego_Final) |
 | Wireframe en grises | [Figma](https://www.figma.com/design/Rmgk68Xv0oKn7tQiDzksmf) y [`docs/wireframes.svg`](docs/wireframes.svg); boceto en papel en [`docs/papel/`](docs/papel) |
+| Publicar en Google Play | Versión 1.0 enviada a revisión en producción |
 | Bonus: easter eggs | Modo Gato Espacial |
 | Bonus: multijugador Firebase | No implementado |
 
@@ -364,7 +365,15 @@ La suite tiene **93 pruebas en 6 archivos**, todas en verde. La lógica del jueg
 
 ## Publicación en Google Play
 
-**Estado:** versión 1.0 firmada y lista para subir a Play Console.
+**Estado:** versión 1.0 enviada a revisión de Google en el canal de producción, con distribución en Colombia, el 5 de noviembre de 2026.
+
+| Dato | Valor |
+|---|---|
+| Paquete | `com.upb.esquivaestelar` |
+| Categoría | Juego · Arcade |
+| Clasificación | Todo público (IARC 3+) |
+| Precio | Gratis, sin anuncios ni compras |
+| Política de privacidad | [juann11.github.io/escuadron-estelar-privacidad](https://juann11.github.io/escuadron-estelar-privacidad/) |
 
 Para generar una versión nueva:
 
@@ -372,13 +381,15 @@ Para generar una versión nueva:
 2. Corre `npm run android` y `npx cap open android`.
 3. En Android Studio: *Build → Generate Signed App Bundle / APK → Android App Bundle*, y firma con la llave de subida del proyecto. La llave y su contraseña se guardan fuera del repositorio.
 4. Sube el `.aab` a Play Console.
-5. Completa la ficha con el ícono de [`assets/icono-play-512.png`](assets/icono-play-512.png), las capturas de `docs/capturas/` y el enlace a la sección [Privacidad](#privacidad).
+5. Recursos de la ficha: el ícono [`assets/icono-play-512.png`](assets/icono-play-512.png), el gráfico de funciones [`assets/grafico-funciones-1024x500.png`](assets/grafico-funciones-1024x500.png) y las capturas de `docs/capturas/`.
 
 Los keystores (`*.jks`, `*.keystore`) y los archivos `.env` están en `.gitignore`.
 
 ## Privacidad
 
 Escuadrón Estelar no pide cuentas, no recopila datos personales, no muestra anuncios y no envía información a ningún servidor. El nombre del piloto, los puntajes y las preferencias se guardan solo en tu dispositivo, y se borran al desinstalar la app o limpiar sus datos.
+
+La política completa está publicada en [juann11.github.io/escuadron-estelar-privacidad](https://juann11.github.io/escuadron-estelar-privacidad/).
 
 ## Uso de IA
 
